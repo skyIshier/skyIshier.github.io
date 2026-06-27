@@ -620,9 +620,19 @@
                 'Batchfile': '#C1F12E',
                 'Dockerfile': '#384d54',
                 'Nginx': '#009639',
-                'Lua': '#000080',
             };
             return map[lang] || '#6e7681';
+        }
+
+        // 从项目语言信息中提取「最主要」的语言，如果 language 为空，尝试从其他字段获取
+        function getPrimaryLanguage(repo) {
+            // 直接使用 GitHub API 返回的 language 字段
+            if (repo.language) {
+                return repo.language;
+            }
+            // 如果 language 为空，但项目有内容，尝试从 languages_url 获取（但需要额外请求，这里简化处理）
+            // 或者返回 null，后续显示 "未识别"
+            return null;
         }
 
         async function fetchRepos() {
@@ -643,9 +653,39 @@
                     return;
                 }
 
-                container.innerHTML = filtered.map(repo => {
+                // 为每个项目获取详细语言信息（如果有必要）
+                const repoPromises = filtered.map(async (repo) => {
+                    // 如果已经有 language 字段，直接使用
+                    if (repo.language) {
+                        return repo;
+                    }
+                    // 否则尝试从 languages_url 获取（但会增加请求次数）
+                    try {
+                        const langRes = await fetch(repo.languages_url);
+                        const langData = await langRes.json();
+                        const langs = Object.keys(langData);
+                        if (langs.length > 0) {
+                            // 取占比最大的语言作为主要语言
+                            let maxLang = langs[0];
+                            let maxBytes = langData[maxLang];
+                            for (const [lang, bytes] of Object.entries(langData)) {
+                                if (bytes > maxBytes) {
+                                    maxLang = lang;
+                                    maxBytes = bytes;
+                                }
+                            }
+                            repo.language = maxLang;
+                        }
+                    } catch (e) {
+                        // 如果获取失败，保持 null
+                    }
+                    return repo;
+                });
+
+                const reposWithLang = await Promise.all(repoPromises);
+
+                container.innerHTML = reposWithLang.map(repo => {
                     const desc = repo.description || '-';
-                    // 获取主要语言 (GitHub API 的 language 字段就是主要语言)
                     const primaryLang = repo.language || null;
                     const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
