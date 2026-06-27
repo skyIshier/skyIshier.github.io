@@ -525,8 +525,7 @@
                 linkGithub: 'GitHub',
                 linkSite: '个人站点',
                 linkQQ: 'QQ 联系',
-                linkMail: '邮箱',
-                noLanguage: '未识别'
+                linkMail: '邮箱'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -542,8 +541,7 @@
                 linkGithub: 'GitHub',
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
-                linkMail: 'Email',
-                noLanguage: 'Not detected'
+                linkMail: 'Email'
             }
         };
 
@@ -624,23 +622,13 @@
             return map[lang] || '#6e7681';
         }
 
-        // 从项目语言信息中提取「最主要」的语言，如果 language 为空，尝试从其他字段获取
-        function getPrimaryLanguage(repo) {
-            // 直接使用 GitHub API 返回的 language 字段
-            if (repo.language) {
-                return repo.language;
-            }
-            // 如果 language 为空，但项目有内容，尝试从 languages_url 获取（但需要额外请求，这里简化处理）
-            // 或者返回 null，后续显示 "未识别"
-            return null;
-        }
-
         async function fetchRepos() {
             const container = document.getElementById('repoContainer');
             const t = i18n[currentLang];
             container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
 
             try {
+                // 先获取仓库列表
                 const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100');
                 if (!res.ok) throw new Error('API error');
                 const repos = await res.json();
@@ -653,19 +641,15 @@
                     return;
                 }
 
-                // 为每个项目获取详细语言信息（如果有必要）
+                // 为每个项目获取详细语言信息
                 const repoPromises = filtered.map(async (repo) => {
-                    // 如果已经有 language 字段，直接使用
-                    if (repo.language) {
-                        return repo;
-                    }
-                    // 否则尝试从 languages_url 获取（但会增加请求次数）
                     try {
+                        // 调用 languages_url 获取语言详情
                         const langRes = await fetch(repo.languages_url);
                         const langData = await langRes.json();
                         const langs = Object.keys(langData);
                         if (langs.length > 0) {
-                            // 取占比最大的语言作为主要语言
+                            // 找出字节数最多的语言作为主要语言
                             let maxLang = langs[0];
                             let maxBytes = langData[maxLang];
                             for (const [lang, bytes] of Object.entries(langData)) {
@@ -675,9 +659,17 @@
                                 }
                             }
                             repo.language = maxLang;
+                            // 保存所有语言用于可能的多语言显示
+                            repo.allLanguages = langs;
+                        } else {
+                            // 如果没有任何语言数据，可能是个空仓库或者只有文档
+                            repo.language = null;
+                            repo.allLanguages = [];
                         }
                     } catch (e) {
-                        // 如果获取失败，保持 null
+                        // 如果获取失败，设置为 null
+                        repo.language = null;
+                        repo.allLanguages = [];
                     }
                     return repo;
                 });
@@ -686,13 +678,20 @@
 
                 container.innerHTML = reposWithLang.map(repo => {
                     const desc = repo.description || '-';
-                    const primaryLang = repo.language || null;
+                    const primaryLang = repo.language;
+                    const allLangs = repo.allLanguages || [];
                     const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
                     const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
 
-                    // 语言显示：有语言显示语言名，无语言显示 "未识别" 或 "Not detected"
-                    const langDisplay = primaryLang ? primaryLang : t.noLanguage;
+                    // 语言显示：优先显示主要语言
+                    let langDisplay = '未检测到代码';
+                    if (primaryLang) {
+                        langDisplay = primaryLang;
+                    } else if (allLangs.length > 0) {
+                        // 如果有多个语言但没有主要语言（理论上不会发生）
+                        langDisplay = allLangs.join(', ');
+                    }
 
                     return `
                         <a href="${repo.html_url}" target="_blank" class="repo-card">
