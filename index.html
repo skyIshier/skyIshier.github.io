@@ -522,7 +522,6 @@
                 forks: '复刻',
                 updated: '更新',
                 topics: '主题',
-                // 链接文字
                 linkGithub: 'GitHub',
                 linkSite: '个人站点',
                 linkQQ: 'QQ 联系',
@@ -539,7 +538,6 @@
                 forks: 'forks',
                 updated: 'Updated',
                 topics: 'Topics',
-                // 链接文字 (英文)
                 linkGithub: 'GitHub',
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
@@ -578,7 +576,7 @@
             document.getElementById('footer').innerHTML =
                 `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> ${t.footer.split('·')[1]?.trim() || t.footer}</span>`;
             document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
-            renderLinks(); // 更新链接文字
+            renderLinks();
         }
 
         // 获取语言颜色 (更全的映射)
@@ -609,14 +607,14 @@
                 'Scala': '#c22d40',
                 'Elixir': '#6e4a7e',
                 'Clojure': '#db5855',
+                'Jupyter Notebook': '#DA5B0B',
+                'Makefile': '#427819',
+                'CMake': '#DA3434',
+                'Assembly': '#6E4C13',
+                'VHDL': '#34B2A0',
+                'Verilog': '#C8A0C0',
             };
             return map[lang] || '#6e7681';
-        }
-
-        // 从项目语言信息中提取「最主要」的语言 (如果存在多种, 取第一个)
-        // GitHub API 返回的 language 字段就是仓库的主要语言
-        function getPrimaryLanguage(repo) {
-            return repo.language || null;
         }
 
         async function fetchRepos() {
@@ -639,8 +637,8 @@
 
                 container.innerHTML = filtered.map(repo => {
                     const desc = repo.description || '-';
-                    // 获取主要语言 (如果存在)
-                    const primaryLang = getPrimaryLanguage(repo);
+                    // 获取主要语言 (GitHub API 的 language 字段就是主要语言)
+                    const primaryLang = repo.language || null;
                     const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
                     const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
@@ -652,7 +650,7 @@
                             </div>
                             <div class="repo-desc">${desc}</div>
                             <div class="repo-extra">
-                                ${primaryLang ? `<span><span class="language-dot" style="background:${langColor};"></span> ${primaryLang}</span>` : `<span><span class="language-dot" style="background:#6e7681;"></span> 未标记</span>`}
+                                ${primaryLang ? `<span><span class="language-dot" style="background:${langColor};"></span> ${primaryLang}</span>` : `<span><span class="language-dot" style="background:#6e7681;"></span> 未识别</span>`}
                                 ${updatedAt ? `<span><i class="far fa-calendar-alt"></i> ${t.updated}: ${updatedAt}</span>` : ''}
                                 ${topics.length ? `<span><i class="fas fa-tags"></i> ${topics.join(', ')}</span>` : ''}
                             </div>
