@@ -7,7 +7,6 @@
     <!-- Font Awesome 6 (免费) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ----- 全局重置 & 字体 ----- */
         * {
             margin: 0;
             padding: 0;
@@ -24,7 +23,7 @@
             position: relative;
         }
 
-        /* ----- 动态粒子画布 (背景) ----- */
+        /* 粒子画布背景 */
         #particle-canvas {
             position: fixed;
             top: 0;
@@ -38,7 +37,7 @@
         .container {
             position: relative;
             z-index: 1;
-            max-width: 1200px;
+            max-width: 1280px;
             margin: 0 auto;
             padding: 40px 24px 60px;
             backdrop-filter: blur(1px);
@@ -73,7 +72,6 @@
             box-shadow: 0 0 30px rgba(88, 166, 255, 0.3);
         }
 
-        /* 在线状态小圆点 (呼吸) */
         .status-dot {
             position: absolute;
             bottom: 8px;
@@ -83,7 +81,6 @@
             background: #3fb950;
             border: 2px solid #0d1117;
             border-radius: 50%;
-            display: inline-block;
             animation: pulse-dot 2s infinite;
         }
 
@@ -106,7 +103,7 @@
         }
 
         .bio {
-            color: #b1bac4;
+            color: #8b949e;
             font-size: 1.15rem;
             max-width: 600px;
             margin: 8px auto 20px;
@@ -125,22 +122,18 @@
             font-weight: 500;
             font-size: 0.9rem;
             backdrop-filter: blur(4px);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .lang-switch:hover {
             background: #30363d;
             border-color: #58a6ff;
-            box-shadow: 0 0 16px rgba(88, 166, 255, 0.2);
+            box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
             transform: translateY(-2px);
         }
 
-        /* 社交链接组 */
         .links {
             display: flex;
-            gap: 14px;
+            gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
             margin-top: 28px;
@@ -151,7 +144,7 @@
             background: rgba(33, 38, 45, 0.6);
             backdrop-filter: blur(4px);
             text-decoration: none;
-            padding: 8px 20px;
+            padding: 8px 18px;
             border: 1px solid #30363d;
             border-radius: 30px;
             transition: all 0.25s ease;
@@ -198,17 +191,17 @@
 
         .repo-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 22px;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 24px;
         }
 
         .repo-card {
             background: rgba(22, 27, 34, 0.7);
             backdrop-filter: blur(6px);
             border: 1px solid #30363d;
-            border-radius: 16px;
-            padding: 22px 22px 20px;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-radius: 18px;
+            padding: 22px 22px 18px;
+            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             text-decoration: none;
             color: inherit;
             display: flex;
@@ -217,7 +210,6 @@
             overflow: hidden;
         }
 
-        /* 卡片光晕 */
         .repo-card::before {
             content: '';
             position: absolute;
@@ -239,14 +231,14 @@
             border-color: #58a6ff;
             transform: translateY(-6px) scale(1.01);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(88, 166, 255, 0.2);
-            background: rgba(30, 38, 48, 0.8);
+            background: rgba(30, 38, 48, 0.85);
         }
 
         .repo-name {
             font-size: 1.15rem;
             font-weight: 600;
             color: #58a6ff;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -267,6 +259,38 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        /* 新增：项目额外信息条 (语言、更新时间、主题) */
+        .repo-extra {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 18px;
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-bottom: 10px;
+            padding: 6px 0 4px;
+            border-top: 1px dashed #2d333b;
+        }
+
+        .repo-extra span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .repo-extra i {
+            font-size: 0.75rem;
+            color: #6e7681;
+        }
+
+        .repo-extra .language-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 2px;
         }
 
         .repo-meta {
@@ -324,11 +348,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
-        footer i.fa-heart {
+        footer i {
             color: #f97583;
             animation: heartBeat 2s infinite;
         }
@@ -341,34 +365,6 @@
             40% { transform: scale(1); }
         }
 
-        /* ===== 额外：技能标签 (新增) ===== */
-        .skill-tags {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px 16px;
-            margin: 20px auto 8px;
-            max-width: 600px;
-        }
-
-        .skill-tags span {
-            background: rgba(33, 38, 45, 0.6);
-            backdrop-filter: blur(4px);
-            padding: 4px 16px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            border: 1px solid #30363d;
-            color: #b1bac4;
-            letter-spacing: 0.3px;
-            transition: 0.2s;
-        }
-
-        .skill-tags span:hover {
-            border-color: #58a6ff;
-            color: #f0f6fc;
-            background: #1f6feb20;
-        }
-
         /* ===== 响应式 ===== */
         @media (max-width: 600px) {
             .container { padding: 24px 16px 40px; }
@@ -377,10 +373,8 @@
             .links a { padding: 6px 14px; font-size: 0.9rem; }
             .avatar { width: 100px; height: 100px; }
             .status-dot { width: 14px; height: 14px; bottom: 4px; right: 4px; }
-            .skill-tags span { font-size: 0.75rem; padding: 3px 12px; }
         }
 
-        /* 光标闪烁 */
         .cursor-blink {
             animation: blink 1s step-end infinite;
         }
@@ -406,16 +400,6 @@
                 游戏逆向 · 二进制分析 · 光遇技术研究
                 <span class="cursor-blink">|</span>
             </p>
-
-            <!-- 技能标签 (新增) -->
-            <div class="skill-tags">
-                <span><i class="fas fa-microchip"></i> 逆向工程</span>
-                <span><i class="fas fa-code"></i> C / C++</span>
-                <span><i class="fas fa-bug"></i> 二进制分析</span>
-                <span><i class="fas fa-gamepad"></i> 光遇技术</span>
-                <span><i class="fas fa-dragon"></i> IDA / Ghidra</span>
-            </div>
-
             <button class="lang-switch" id="langBtn">
                 <i class="fas fa-globe"></i> English
             </button>
@@ -527,7 +511,7 @@
 
 
         // ============================================================
-        //  2. 双语 + 仓库拉取 (英文名统一为「十二」)
+        //  2. 双语 + 仓库拉取 (统一显示 "十二")
         // ============================================================
         const i18n = {
             zh: {
@@ -538,18 +522,21 @@
                 loading: '加载项目中...',
                 footer: '© 2026 skyIshier · 专注光遇技术研究',
                 stars: '星标',
-                forks: '复刻'
+                forks: '复刻',
+                updated: '更新',
+                topics: '主题'
             },
             en: {
-                // 英文模式下依然显示「十二」, 不显示 Shier
-                username: 'skyIshier · 十二',
+                username: 'skyIshier · 十二',   // 中英文统一显示 "十二"
                 bio: 'Game RE · Binary Analysis · Sky Research',
                 langBtn: '中文',
                 projectsTitle: 'Open Source Projects',
                 loading: 'Loading projects...',
                 footer: '© 2026 skyIshier · Built for Sky',
                 stars: 'stars',
-                forks: 'forks'
+                forks: 'forks',
+                updated: 'Updated',
+                topics: 'Topics'
             }
         };
 
@@ -564,19 +551,38 @@
 
         function renderText() {
             const t = i18n[currentLang];
-            document.getElementById('username').textContent = t.username; // 统一为「十二」
+            document.getElementById('username').textContent = t.username;  // 始终为 "skyIshier · 十二"
             const bioEl = document.getElementById('bio');
             bioEl.innerHTML = t.bio + ' <span class="cursor-blink">|</span>';
             document.getElementById('langBtn').innerHTML = `<i class="fas fa-globe"></i> ${t.langBtn}`;
             document.getElementById('projectsTitle').innerHTML = `<i class="fas fa-code-branch"></i> ${t.projectsTitle}`;
-            // footer 保持风格一致
-            const footerEl = document.getElementById('footer');
-            if (currentLang === 'zh') {
-                footerEl.innerHTML = `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> 专注光遇技术研究</span>`;
-            } else {
-                footerEl.innerHTML = `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> Built for Sky</span>`;
-            }
+            document.getElementById('footer').innerHTML =
+                `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> ${t.footer.split('·')[1]?.trim() || t.footer}</span>`;
             document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+        }
+
+        // 获取语言颜色 (简易映射)
+        function getLangColor(lang) {
+            const map = {
+                'JavaScript': '#f1e05a',
+                'Python': '#3572A5',
+                'C++': '#f34b7d',
+                'C': '#555555',
+                'Java': '#b07219',
+                'TypeScript': '#3178c6',
+                'HTML': '#e34c26',
+                'CSS': '#563d7c',
+                'Shell': '#89e051',
+                'Rust': '#dea584',
+                'Go': '#00ADD8',
+                'Vue': '#41b883',
+                'PHP': '#4F5D95',
+                'Ruby': '#701516',
+                'Swift': '#ffac45',
+                'Kotlin': '#A97BFF',
+                'Dart': '#00B4AB',
+            };
+            return map[lang] || '#6e7681';
         }
 
         async function fetchRepos() {
@@ -589,7 +595,6 @@
                 if (!res.ok) throw new Error('API error');
                 const repos = await res.json();
 
-                // 过滤掉个人主页仓库
                 const filtered = repos.filter(r => !r.name.includes('skyIshier.github.io'));
 
                 if (filtered.length === 0) {
@@ -599,16 +604,27 @@
 
                 container.innerHTML = filtered.map(repo => {
                     const desc = repo.description || '-';
+                    const lang = repo.language || '';
+                    const langColor = getLangColor(lang);
+                    // 取前3个topic
+                    const topics = repo.topics ? repo.topics.slice(0, 3) : [];
+                    const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
+
                     return `
                         <a href="${repo.html_url}" target="_blank" class="repo-card">
                             <div class="repo-name">
                                 <i class="fas fa-folder-open"></i> ${repo.name}
                             </div>
                             <div class="repo-desc">${desc}</div>
+                            <div class="repo-extra">
+                                ${lang ? `<span><span class="language-dot" style="background:${langColor};"></span> ${lang}</span>` : ''}
+                                ${updatedAt ? `<span><i class="far fa-calendar-alt"></i> ${t.updated}: ${updatedAt}</span>` : ''}
+                                ${topics.length ? `<span><i class="fas fa-tags"></i> ${topics.join(', ')}</span>` : ''}
+                            </div>
                             <div class="repo-meta">
                                 <span><i class="fas fa-star"></i> ${repo.stargazers_count} ${t.stars}</span>
                                 <span><i class="fas fa-code-branch"></i> ${repo.forks_count} ${t.forks}</span>
-                                ${repo.language ? `<span><i class="fas fa-circle" style="color:#6e7681; font-size:0.6rem;"></i> ${repo.language}</span>` : ''}
+                                ${repo.size ? `<span><i class="fas fa-database"></i> ${(repo.size/1024).toFixed(1)} MB</span>` : ''}
                             </div>
                         </a>
                     `;
