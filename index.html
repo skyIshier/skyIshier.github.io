@@ -1,73 +1,510 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>skyIshier · 十二 | 动态主页</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Inter', 'Space Grotesk', system-ui, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0d1117;
             color: #e6edf3;
             line-height: 1.6;
+            min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
         }
-        #root { min-height: 100vh; width: 100%; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0d1117; }
-        ::-webkit-scrollbar-thumb { background: rgba(125, 211, 252, 0.2); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(125, 211, 252, 0.4); }
-        .shimmer {
-            background-size: 200% auto;
-            animation: shimmer 4s linear infinite;
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
-        @keyframes shimmer {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
         }
+
+        /* ===== 头部 ===== */
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 3px solid #30363d;
+            transition: all 0.4s ease;
+            object-fit: cover;
+        }
+
+        .avatar-wrapper:hover .avatar {
+            transform: scale(1.03);
+            border-color: #58a6ff;
+            box-shadow: 0 0 30px rgba(88, 166, 255, 0.3);
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 18px;
+            height: 18px;
+            background: #3fb950;
+            border: 2px solid #0d1117;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
         @keyframes pulse-dot {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.2); opacity: 1; }
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
         }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #f0f6fc 0%, #58a6ff 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+        }
+
+        .bio {
+            color: #8b949e;
+            font-size: 1.15rem;
+            max-width: 600px;
+            margin: 8px auto 20px;
+        }
+
+        .lang-switch {
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #e6edf3;
+            padding: 8px 22px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .lang-switch:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+            box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 28px;
+        }
+
+        .links a {
+            color: #c9d1d9;
+            background: rgba(33, 38, 45, 0.6);
+            backdrop-filter: blur(4px);
+            text-decoration: none;
+            padding: 8px 18px;
+            border: 1px solid #30363d;
+            border-radius: 30px;
+            transition: all 0.25s ease;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .links a i {
+            font-size: 1rem;
+            color: #58a6ff;
+        }
+
+        .links a:hover {
+            background: #1f6feb20;
+            border-color: #58a6ff;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(88, 166, 255, 0.15);
+            color: #f0f6fc;
+        }
+
+        /* ===== 项目区域 ===== */
+        section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title i {
+            color: #58a6ff;
+            font-size: 1.6rem;
+        }
+
+        .repo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 24px;
+        }
+
+        .repo-card {
+            background: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(6px);
+            border: 1px solid #30363d;
+            border-radius: 18px;
+            padding: 22px 22px 18px;
+            transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .repo-card:hover {
+            border-color: #58a6ff;
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(88, 166, 255, 0.2);
+            background: rgba(30, 38, 48, 0.85);
+        }
+
+        .repo-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .repo-name i {
+            font-size: 0.9rem;
+            color: #6e7681;
+        }
+
+        .repo-desc {
+            color: #b1bac4;
+            font-size: 0.95rem;
+            flex: 1;
+            margin-bottom: 14px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .repo-extra {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px 18px;
+            font-size: 0.8rem;
+            color: #8b949e;
+            margin-bottom: 10px;
+            padding: 6px 0 4px;
+            border-top: 1px dashed #2d333b;
+        }
+
+        .repo-extra span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .repo-extra .language-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 2px;
+            flex-shrink: 0;
+        }
+
+        .repo-meta {
+            margin-top: 4px;
+            font-size: 0.85rem;
+            color: #6e7681;
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            border-top: 1px solid #2d333b;
+            padding-top: 12px;
+        }
+
+        .repo-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #8b949e;
+            padding: 60px 20px;
+            font-size: 1.1rem;
+            grid-column: 1 / -1;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            margin-bottom: 16px;
+            display: block;
+            color: #58a6ff;
+            animation: spin 1.5s linear infinite;
+        }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
+
+        footer {
+            text-align: center;
+            color: #6e7681;
+            font-size: 0.95rem;
+            padding-top: 40px;
+            border-top: 1px solid #30363d;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        footer i {
+            color: #f97583;
+            animation: heartBeat 2s infinite;
+        }
+
         @keyframes heartBeat {
-            0%, 100% { transform: scale(1); }
-            10% { transform: scale(1.2); }
-            20% { transform: scale(1); }
-            30% { transform: scale(1.1); }
-            40% { transform: scale(1); }
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            10% {
+                transform: scale(1.2);
+            }
+            20% {
+                transform: scale(1);
+            }
+            30% {
+                transform: scale(1.1);
+            }
+            40% {
+                transform: scale(1);
+            }
         }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px 16px 40px;
+            }
+            h1 {
+                font-size: 2.2rem;
+            }
+            .repo-grid {
+                grid-template-columns: 1fr;
+            }
+            .avatar {
+                width: 100px;
+                height: 100px;
+            }
+            .status-dot {
+                width: 14px;
+                height: 14px;
+                bottom: 4px;
+                right: 4px;
+            }
+        }
+
         .cursor-blink {
             animation: blink 1s step-end infinite;
         }
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <!-- 使用 React 和 ReactDOM 从 CDN 加载 -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- 使用 Babel 支持 JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <canvas id="particle-canvas"></canvas>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    <div class="container">
+        <header>
+            <div class="avatar-wrapper">
+                <img class="avatar" src="https://avatars.githubusercontent.com/skyIshier?v=4" alt="avatar">
+                <span class="status-dot"></span>
+            </div>
+            <h1 id="username">skyIshier · 十二</h1>
+            <p class="bio" id="bio">
+                游戏逆向 · 二进制分析 · 光遇技术研究
+                <span class="cursor-blink">|</span>
+            </p>
+            <button class="lang-switch" id="langBtn">
+                <i class="fas fa-globe"></i> English
+            </button>
+            <div class="links" id="linksContainer"></div>
+        </header>
+
+        <section>
+            <h2 class="section-title" id="projectsTitle">
+                <i class="fas fa-code-branch"></i> 开源项目
+            </h2>
+            <div id="repoContainer" class="repo-grid">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    加载项目中...
+                </div>
+            </div>
+        </section>
+
+        <footer id="footer">
+            <span>© 2026 skyIshier</span>
+            <span>·</span>
+            <span><i class="fas fa-heart"></i> 专注光遇技术研究</span>
+        </footer>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. 粒子背景
+        // ============================================================
+        (function initParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let particles = [];
+            const PARTICLE_COUNT = 100;
+            const MAX_SPEED = 0.6;
+            const CONNECT_DIST = 140;
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() { this.reset(); }
+                reset() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.vx = (Math.random() - 0.5) * MAX_SPEED * 2;
+                    this.vy = (Math.random() - 0.5) * MAX_SPEED * 2;
+                    this.radius = 1.2 + Math.random() * 1.8;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.x < 0 || this.x > width) { this.vx *= -1;
+                        this.x += this.vx; }
+                    if (this.y < 0 || this.y > height) { this.vy *= -1;
+                        this.y += this.vy; }
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(136, 192, 255, 0.5)';
+                    ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push(new Particle());
+            }
+
+            function drawLines() {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < CONNECT_DIST) {
+                            const opacity = 0.2 * (1 - dist / CONNECT_DIST);
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(88, 166, 255, ${opacity})`;
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => { p.update();
+                    p.draw(); });
+                drawLines();
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+
 
         // ============================================================
-        // 1. 国际化配置
+        // 2. 国际化配置 (参考您的项目结构)
         // ============================================================
         const i18n = {
             zh: {
@@ -102,19 +539,18 @@
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
                 linkMail: 'Email',
-                noLanguage: 'No code detected'
+                noLanguage: 'Not detected'
             }
         };
 
-        // ============================================================
-        // 2. 获取当前语言
-        // ============================================================
         function getLang() {
             const params = new URLSearchParams(window.location.search);
             const urlLang = params.get('lang');
             if (urlLang && i18n[urlLang]) return urlLang;
             return navigator.language.startsWith('zh') ? 'zh' : 'en';
         }
+
+        let currentLang = getLang();
 
         // ============================================================
         // 3. 语言颜色映射
@@ -156,380 +592,145 @@
                 'PowerShell': '#012456',
                 'Batchfile': '#C1F12E',
                 'Dockerfile': '#384d54',
-                'Nginx': '#009639',
             };
             return map[lang] || '#6e7681';
         }
 
         // ============================================================
-        // 4. 粒子背景组件
+        // 4. 渲染函数
         // ============================================================
-        function StarField() {
-            const canvasRef = useRef(null);
-
-            useEffect(() => {
-                const canvas = canvasRef.current;
-                const ctx = canvas.getContext('2d');
-                let width, height;
-                let particles = [];
-                const PARTICLE_COUNT = 100;
-                const MAX_SPEED = 0.6;
-                const CONNECT_DIST = 140;
-                let raf;
-
-                function resize() {
-                    width = canvas.width = window.innerWidth;
-                    height = canvas.height = window.innerHeight;
-                }
-
-                function initParticles() {
-                    particles = [];
-                    for (let i = 0; i < PARTICLE_COUNT; i++) {
-                        particles.push({
-                            x: Math.random() * width,
-                            y: Math.random() * height,
-                            vx: (Math.random() - 0.5) * MAX_SPEED * 2,
-                            vy: (Math.random() - 0.5) * MAX_SPEED * 2,
-                            radius: 1.2 + Math.random() * 1.8,
-                        });
-                    }
-                }
-
-                function draw() {
-                    ctx.clearRect(0, 0, width, height);
-
-                    // 更新和绘制粒子
-                    for (const p of particles) {
-                        p.x += p.vx;
-                        p.y += p.vy;
-                        if (p.x < 0 || p.x > width) p.vx *= -1;
-                        if (p.y < 0 || p.y > height) p.vy *= -1;
-
-                        ctx.beginPath();
-                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                        ctx.fillStyle = 'rgba(136, 192, 255, 0.5)';
-                        ctx.fill();
-                    }
-
-                    // 画连接线
-                    for (let i = 0; i < particles.length; i++) {
-                        for (let j = i + 1; j < particles.length; j++) {
-                            const dx = particles[i].x - particles[j].x;
-                            const dy = particles[i].y - particles[j].y;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
-                            if (dist < CONNECT_DIST) {
-                                const opacity = 0.2 * (1 - dist / CONNECT_DIST);
-                                ctx.beginPath();
-                                ctx.moveTo(particles[i].x, particles[i].y);
-                                ctx.lineTo(particles[j].x, particles[j].y);
-                                ctx.strokeStyle = `rgba(88, 166, 255, ${opacity})`;
-                                ctx.lineWidth = 0.8;
-                                ctx.stroke();
-                            }
-                        }
-                    }
-
-                    raf = requestAnimationFrame(draw);
-                }
-
-                resize();
-                initParticles();
-                draw();
-
-                window.addEventListener('resize', () => {
-                    resize();
-                    initParticles();
-                });
-
-                return () => {
-                    cancelAnimationFrame(raf);
-                    window.removeEventListener('resize', resize);
-                };
-            }, []);
-
-            return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
-        }
-
-        // ============================================================
-        // 5. 自定义 Hook: 获取 GitHub 仓库 (参考您的项目)
-        // ============================================================
-        function useGitHubRepos(username) {
-            const [repos, setRepos] = useState([]);
-            const [loading, setLoading] = useState(true);
-            const [error, setError] = useState(null);
-
-            useEffect(() => {
-                const controller = new AbortController();
-
-                async function fetchRepos() {
-                    setLoading(true);
-                    setError(null);
-
-                    try {
-                        // 先获取仓库列表
-                        const res = await fetch(
-                            `https://api.github.com/users/${username}/repos?sort=updated&per_page=100`,
-                            { signal: controller.signal }
-                        );
-
-                        if (!res.ok) {
-                            throw new Error(`Failed to fetch: ${res.status}`);
-                        }
-
-                        const data = await res.json();
-
-                        // 过滤掉个人主页仓库
-                        const filtered = data.filter(r => !r.name.includes('github.io'));
-
-                        // 为每个项目获取详细语言信息
-                        const reposWithLang = await Promise.all(
-                            filtered.map(async (repo) => {
-                                try {
-                                    const langRes = await fetch(repo.languages_url, {
-                                        signal: controller.signal
-                                    });
-                                    const langData = await langRes.json();
-                                    const langs = Object.keys(langData);
-
-                                    if (langs.length > 0) {
-                                        // 找出字节数最多的语言
-                                        let maxLang = langs[0];
-                                        let maxBytes = langData[maxLang];
-                                        for (const [lang, bytes] of Object.entries(langData)) {
-                                            if (bytes > maxBytes) {
-                                                maxLang = lang;
-                                                maxBytes = bytes;
-                                            }
-                                        }
-                                        repo.language = maxLang;
-                                        repo.allLanguages = langs;
-                                    } else {
-                                        repo.language = null;
-                                        repo.allLanguages = [];
-                                    }
-                                } catch (e) {
-                                    repo.language = null;
-                                    repo.allLanguages = [];
-                                }
-                                return repo;
-                            })
-                        );
-
-                        setRepos(reposWithLang);
-                    } catch (err) {
-                        if (err.name === 'AbortError') return;
-                        setError(err.message);
-                    } finally {
-                        setLoading(false);
-                    }
-                }
-
-                fetchRepos();
-
-                return () => {
-                    controller.abort();
-                };
-            }, [username]);
-
-            return { repos, loading, error };
-        }
-
-        // ============================================================
-        // 6. 主应用组件
-        // ============================================================
-        function App() {
-            const [currentLang, setCurrentLang] = useState(getLang);
-            const { repos, loading, error } = useGitHubRepos('skyIshier');
-
+        function renderLinks() {
             const t = i18n[currentLang];
+            const container = document.getElementById('linksContainer');
+            container.innerHTML = `
+                <a href="https://github.com/skyIshier" target="_blank"><i class="fab fa-github"></i> ${t.linkGithub}</a>
+                <a href="https://skygf-link.infinityfree.me" target="_blank"><i class="fas fa-globe"></i> ${t.linkSite}</a>
+                <a href="https://qm.qq.com/q/v06Uaf7Gqm" target="_blank"><i class="fab fa-qq"></i> ${t.linkQQ}</a>
+                <a href="mailto:3787533101@qq.com"><i class="fas fa-envelope"></i> ${t.linkMail}</a>
+            `;
+        }
 
-            // 切换语言
-            const toggleLang = useCallback(() => {
-                const nextLang = currentLang === 'zh' ? 'en' : 'zh';
-                setCurrentLang(nextLang);
-                const url = new URL(window.location);
-                url.searchParams.set('lang', nextLang);
-                window.history.replaceState({}, '', url);
-            }, [currentLang]);
-
-            // 链接配置
-            const links = [
-                { href: 'https://github.com/skyIshier', icon: 'fab fa-github', label: t.linkGithub },
-                { href: 'https://skygf-link.infinityfree.me', icon: 'fas fa-globe', label: t.linkSite },
-                { href: 'https://qm.qq.com/q/v06Uaf7Gqm', icon: 'fab fa-qq', label: t.linkQQ },
-                { href: 'mailto:3787533101@qq.com', icon: 'fas fa-envelope', label: t.linkMail },
-            ];
-
-            return (
-                <div className="relative min-h-screen bg-[#0d1117]">
-                    <StarField />
-
-                    <div className="relative z-10 container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-6xl">
-                        {/* Header */}
-                        <header className="text-center mb-12 sm:mb-16">
-                            <div className="relative inline-block mb-5">
-                                <img
-                                    src="https://avatars.githubusercontent.com/skyIshier?v=4"
-                                    alt="avatar"
-                                    className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-2 border-[#30363d] object-cover transition-all duration-300 hover:border-[#58a6ff] hover:shadow-[0_0_30px_rgba(88,166,255,0.3)] hover:scale-[1.03]"
-                                />
-                                <span className="absolute bottom-1 right-1 w-4 h-4 bg-[#3fb950] border-2 border-[#0d1117] rounded-full animate-[pulse-dot_2s_infinite]" />
-                            </div>
-
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-[#f0f6fc] via-[#58a6ff] to-[#58a6ff] bg-clip-text text-transparent">
-                                {t.username}
-                            </h1>
-
-                            <p className="text-[#8b949e] text-base sm:text-lg max-w-lg mx-auto mb-5">
-                                {t.bio} <span className="cursor-blink">|</span>
-                            </p>
-
-                            <button
-                                onClick={toggleLang}
-                                className="bg-[#21262d] border border-[#30363d] text-[#e6edf3] px-5 py-2 rounded-full text-sm hover:bg-[#30363d] hover:border-[#58a6ff] transition-all hover:shadow-[0_0_12px_rgba(88,166,255,0.2)] hover:-translate-y-0.5"
-                            >
-                                <i className="fas fa-globe mr-2"></i>
-                                {t.langBtn}
-                            </button>
-
-                            {/* 链接 */}
-                            <div className="flex flex-wrap gap-3 justify-center mt-7">
-                                {links.map((link, idx) => (
-                                    <a
-                                        key={idx}
-                                        href={link.href}
-                                        target={link.href.startsWith('http') ? '_blank' : undefined}
-                                        rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                                        className="bg-[rgba(33,38,45,0.6)] backdrop-blur-sm border border-[#30363d] text-[#c9d1d9] px-4 py-2 rounded-full text-sm hover:bg-[rgba(31,111,235,0.125)] hover:border-[#58a6ff] hover:-translate-y-1 transition-all hover:shadow-[0_6px_16px_rgba(88,166,255,0.15)] flex items-center gap-2"
-                                    >
-                                        <i className={link.icon} style={{ color: '#58a6ff' }}></i>
-                                        {link.label}
-                                    </a>
-                                ))}
-                            </div>
-                        </header>
-
-                        {/* Projects Section */}
-                        <section>
-                            <h2 className="text-2xl sm:text-3xl font-semibold mb-6 pb-3 border-b border-[#30363d] flex items-center gap-3">
-                                <i className="fas fa-code-branch text-[#58a6ff]"></i>
-                                {t.projectsTitle}
-                            </h2>
-
-                            {loading && (
-                                <div className="text-center text-[#8b949e] py-16">
-                                    <i className="fas fa-spinner text-4xl text-[#58a6ff] block mb-4 animate-[spin_1.5s_linear_infinite]"></i>
-                                    {t.loading}
-                                </div>
-                            )}
-
-                            {error && (
-                                <div className="text-center text-[#f85149] py-16">
-                                    <i className="fas fa-exclamation-triangle text-3xl block mb-3"></i>
-                                    加载失败，请刷新重试
-                                </div>
-                            )}
-
-                            {!loading && !error && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                    {repos.map((repo) => {
-                                        const primaryLang = repo.language;
-                                        const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
-                                        const langDisplay = primaryLang || t.noLanguage;
-                                        const topics = repo.topics ? repo.topics.slice(0, 3) : [];
-                                        const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
-                                        const desc = repo.description || '-';
-
-                                        return (
-                                            <a
-                                                key={repo.id}
-                                                href={repo.html_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="bg-[rgba(22,27,34,0.7)] backdrop-blur-sm border border-[#30363d] rounded-2xl p-5 transition-all duration-300 hover:border-[#58a6ff] hover:-translate-y-1.5 hover:scale-[1.01] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(88,166,255,0.2)] hover:bg-[rgba(30,38,48,0.85)] flex flex-col relative overflow-hidden group"
-                                            >
-                                                <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_30%_40%,rgba(88,166,255,0.04),transparent_70%)]" />
-
-                                                <div className="repo-name text-[#58a6ff] font-semibold text-lg flex items-center gap-2 mb-1.5">
-                                                    <i className="fas fa-folder-open text-[#6e7681] text-sm"></i>
-                                                    {repo.name}
-                                                </div>
-
-                                                <div className="text-[#b1bac4] text-sm flex-1 mb-3 line-clamp-2">
-                                                    {desc}
-                                                </div>
-
-                                                <div className="flex flex-wrap items-center gap-3 text-xs text-[#8b949e] pt-2 border-t border-dashed border-[#2d333b] mb-2">
-                                                    <span className="flex items-center gap-1.5">
-                                                        <span
-                                                            className="inline-block w-2.5 h-2.5 rounded-full"
-                                                            style={{ background: langColor }}
-                                                        />
-                                                        {langDisplay}
-                                                    </span>
-                                                    {updatedAt && (
-                                                        <span className="flex items-center gap-1.5">
-                                                            <i className="far fa-calendar-alt text-[#6e7681]"></i>
-                                                            {t.updated}: {updatedAt}
-                                                        </span>
-                                                    )}
-                                                    {topics.length > 0 && (
-                                                        <span className="flex items-center gap-1.5">
-                                                            <i className="fas fa-tags text-[#6e7681]"></i>
-                                                            {topics.join(', ')}
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                <div className="flex items-center gap-4 text-sm text-[#6e7681] pt-2 border-t border-[#2d333b]">
-                                                    <span className="flex items-center gap-1.5">
-                                                        <i className="fas fa-star text-[#8b949e]"></i>
-                                                        {repo.stargazers_count} {t.stars}
-                                                    </span>
-                                                    <span className="flex items-center gap-1.5">
-                                                        <i className="fas fa-code-branch text-[#8b949e]"></i>
-                                                        {repo.forks_count} {t.forks}
-                                                    </span>
-                                                    {repo.size && (
-                                                        <span className="flex items-center gap-1.5">
-                                                            <i className="fas fa-database text-[#8b949e]"></i>
-                                                            {(repo.size / 1024).toFixed(1)} MB
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </a>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-                            {!loading && !error && repos.length === 0 && (
-                                <div className="text-center text-[#8b949e] py-16">
-                                    <i className="fas fa-inbox text-3xl block mb-3"></i>
-                                    暂无公开项目
-                                </div>
-                            )}
-                        </section>
-
-                        {/* Footer */}
-                        <footer className="text-center text-[#6e7681] text-sm pt-10 mt-6 border-t border-[#30363d] flex justify-center items-center gap-3 flex-wrap">
-                            <span>© 2026 skyIshier</span>
-                            <span>·</span>
-                            <span>
-                                <i className="fas fa-heart text-[#f97583] animate-[heartBeat_2s_infinite]"></i>
-                                {' '}{t.footer.split('·')[1]?.trim() || t.footer}
-                            </span>
-                        </footer>
-                    </div>
-                </div>
-            );
+        function renderText() {
+            const t = i18n[currentLang];
+            document.getElementById('username').textContent = t.username;
+            const bioEl = document.getElementById('bio');
+            bioEl.innerHTML = t.bio + ' <span class="cursor-blink">|</span>';
+            document.getElementById('langBtn').innerHTML = `<i class="fas fa-globe"></i> ${t.langBtn}`;
+            document.getElementById('projectsTitle').innerHTML = `<i class="fas fa-code-branch"></i> ${t.projectsTitle}`;
+            document.getElementById('footer').innerHTML =
+                `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> ${t.footer.split('·')[1]?.trim() || t.footer}</span>`;
+            document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+            renderLinks();
         }
 
         // ============================================================
-        // 7. 渲染
+        // 5. 获取 GitHub 仓库 (完全参考您的 useGitHubRepos)
         // ============================================================
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        async function fetchRepos() {
+            const container = document.getElementById('repoContainer');
+            const t = i18n[currentLang];
+            container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
+
+            try {
+                // 第一步：获取仓库列表
+                const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100');
+                if (!res.ok) throw new Error('API error');
+                const repos = await res.json();
+
+                // 过滤掉个人主页仓库
+                const filtered = repos.filter(r => !r.name.includes('github.io'));
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="loading">✨ 暂无公开项目</div>`;
+                    return;
+                }
+
+                // 第二步：为每个项目获取详细语言信息 (参考您的 useGitHubRepos)
+                const reposWithLang = await Promise.all(
+                    filtered.map(async (repo) => {
+                        try {
+                            const langRes = await fetch(repo.languages_url);
+                            const langData = await langRes.json();
+                            const langs = Object.keys(langData);
+
+                            if (langs.length > 0) {
+                                // 找出字节数最多的语言作为主要语言
+                                let maxLang = langs[0];
+                                let maxBytes = langData[maxLang];
+                                for (const [lang, bytes] of Object.entries(langData)) {
+                                    if (bytes > maxBytes) {
+                                        maxLang = lang;
+                                        maxBytes = bytes;
+                                    }
+                                }
+                                repo.language = maxLang;
+                                repo.allLanguages = langs;
+                            } else {
+                                repo.language = null;
+                                repo.allLanguages = [];
+                            }
+                        } catch (e) {
+                            repo.language = null;
+                            repo.allLanguages = [];
+                        }
+                        return repo;
+                    })
+                );
+
+                // 第三步：渲染
+                container.innerHTML = reposWithLang.map(repo => {
+                    const desc = repo.description || '-';
+                    const primaryLang = repo.language;
+                    const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
+                    const topics = repo.topics ? repo.topics.slice(0, 3) : [];
+                    const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
+
+                    // 关键：如果 primaryLang 存在就显示，否则显示 "未检测到代码" 或 "Not detected"
+                    const langDisplay = primaryLang || t.noLanguage;
+
+                    return `
+                        <a href="${repo.html_url}" target="_blank" class="repo-card">
+                            <div class="repo-name">
+                                <i class="fas fa-folder-open"></i> ${repo.name}
+                            </div>
+                            <div class="repo-desc">${desc}</div>
+                            <div class="repo-extra">
+                                <span><span class="language-dot" style="background:${langColor};"></span> ${langDisplay}</span>
+                                ${updatedAt ? `<span><i class="far fa-calendar-alt"></i> ${t.updated}: ${updatedAt}</span>` : ''}
+                                ${topics.length ? `<span><i class="fas fa-tags"></i> ${topics.join(', ')}</span>` : ''}
+                            </div>
+                            <div class="repo-meta">
+                                <span><i class="fas fa-star"></i> ${repo.stargazers_count} ${t.stars}</span>
+                                <span><i class="fas fa-code-branch"></i> ${repo.forks_count} ${t.forks}</span>
+                                ${repo.size ? `<span><i class="fas fa-database"></i> ${(repo.size/1024).toFixed(1)} MB</span>` : ''}
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                container.innerHTML = `<div class="loading"><i class="fas fa-exclamation-triangle"></i> 加载失败，请刷新重试</div>`;
+                console.warn('Fetch repos error:', e);
+            }
+        }
+
+        // ============================================================
+        // 6. 切换语言
+        // ============================================================
+        document.getElementById('langBtn').addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            const url = new URL(window.location);
+            url.searchParams.set('lang', currentLang);
+            window.history.replaceState({}, '', url);
+            renderText();
+            fetchRepos();
+        });
+
+        // ============================================================
+        // 7. 初始化
+        // ============================================================
+        renderText();
+        fetchRepos();
     </script>
 </body>
-</html>
+    </html>
