@@ -165,33 +165,20 @@
             color: #f0f6fc;
         }
 
-        /* 下载按钮特殊样式 (与links一致但独立) */
-        .download-btn {
-            color: #c9d1d9;
-            background: rgba(33, 38, 45, 0.6);
-            backdrop-filter: blur(4px);
-            text-decoration: none;
-            padding: 8px 18px;
-            border: 1px solid #30363d;
-            border-radius: 30px;
-            transition: all 0.25s ease;
-            font-size: 0.95rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-family: inherit;
-        }
-        .download-btn i {
-            font-size: 1rem;
-            color: #58a6ff;
-        }
-        .download-btn:hover {
-            background: #1f6feb20;
+        /* 下载按钮特殊强调 */
+        .links a.download-btn {
+            background: #1f6feb30;
             border-color: #58a6ff;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(88, 166, 255, 0.15);
             color: #f0f6fc;
+            font-weight: 500;
+        }
+        .links a.download-btn i {
+            color: #f0f6fc;
+        }
+        .links a.download-btn:hover {
+            background: #1f6feb60;
+            border-color: #79c0ff;
+            box-shadow: 0 6px 20px rgba(88, 166, 255, 0.3);
         }
 
         /* ===== 项目区域 ===== */
@@ -431,10 +418,7 @@
             <button class="lang-switch" id="langBtn">
                 <i class="fas fa-globe"></i> English
             </button>
-            <div class="links" id="linksContainer">
-                <!-- 动态生成，但我们将下载按钮也放在这里，方便布局 -->
-            </div>
-            <!-- 独立下载按钮 (同时出现在links区域) 通过js注入，但为了清晰，也在这里留一个备用容器，实际由js统一渲染 -->
+            <div class="links" id="linksContainer"></div>
         </header>
 
         <section>
@@ -536,7 +520,7 @@
 
 
         // ============================================================
-        // 2. 国际化配置 (增加下载按钮文案)
+        // 2. 国际化配置
         // ============================================================
         const i18n = {
             zh: {
@@ -571,7 +555,7 @@
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
                 linkMail: 'Email',
-                download: 'Download Archive'   // 新增
+                download: 'Download File Consolidation'  // 新增
             }
         };
 
@@ -629,33 +613,18 @@
         }
 
         // ============================================================
-        // 4. 渲染函数 (包含下载按钮)
+        // 4. 渲染函数
         // ============================================================
         function renderLinks() {
             const t = i18n[currentLang];
             const container = document.getElementById('linksContainer');
-            // 注意：下载按钮使用 .download-btn 样式，点击触发下载
             container.innerHTML = `
                         <a href="https://github.com/skyIshier" target="_blank"><i class="fab fa-github"></i> ${t.linkGithub}</a>
                         <a href="https://skygf-link.infinityfree.me" target="_blank"><i class="fas fa-globe"></i> ${t.linkSite}</a>
                         <a href="https://qm.qq.com/q/v06Uaf7Gqm" target="_blank"><i class="fab fa-qq"></i> ${t.linkQQ}</a>
                         <a href="mailto:3787533101@qq.com"><i class="fas fa-envelope"></i> ${t.linkMail}</a>
-                        <button class="download-btn" id="downloadBtn"><i class="fas fa-file-archive"></i> ${t.download}</button>
+                        <a href="https://github.com/skyIshier/skyIshier.github.io/releases/" target="_blank" class="download-btn"><i class="fas fa-download"></i> ${t.download}</a>
                     `;
-            // 绑定下载事件 (必须等元素渲染完成)
-            const downloadBtn = document.getElementById('downloadBtn');
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', function(e) {
-                    // 下载同目录下的 文件整合.zip
-                    const url = '文件整合.zip';
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = '文件整合.zip';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                });
-            }
         }
 
         function renderText() {
@@ -668,7 +637,6 @@
             document.getElementById('footer').innerHTML =
                 `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> ${t.footer.split('·')[1]?.trim() || t.footer}</span>`;
             document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
-            // 重新渲染链接 (包含下载按钮)
             renderLinks();
         }
 
@@ -703,6 +671,7 @@
                             const langs = Object.keys(langData);
 
                             if (langs.length > 0) {
+                                // 找出字节数最多的语言作为主要语言
                                 let maxLang = langs[0];
                                 let maxBytes = langData[maxLang];
                                 for (const [lang, bytes] of Object.entries(langData)) {
@@ -733,6 +702,7 @@
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
                     const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
 
+                    // 关键：直接显示语言名，如果没有语言才显示提示
                     const langDisplay = primaryLang || '未检测到代码';
 
                     return `
@@ -780,4 +750,4 @@
         fetchRepos();
     </script>
 </body>
-</html>
+    </html>
