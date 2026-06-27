@@ -120,6 +120,7 @@
             transition: all 0.3s ease;
             font-weight: 500;
             font-size: 0.9rem;
+            margin: 0 6px;
         }
 
         .lang-switch:hover {
@@ -127,6 +128,38 @@
             border-color: #58a6ff;
             box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
             transform: translateY(-2px);
+        }
+
+        .download-btn {
+            background: #1f6feb;
+            border: none;
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin: 0 6px;
+            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+        }
+
+        .download-btn:hover {
+            background: #388bfd;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(31, 111, 235, 0.4);
+        }
+
+        .download-btn i {
+            margin-right: 6px;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .links {
@@ -163,22 +196,6 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 16px rgba(88, 166, 255, 0.15);
             color: #f0f6fc;
-        }
-
-        /* 下载按钮特殊强调 */
-        .links a.download-btn {
-            background: #1f6feb30;
-            border-color: #58a6ff;
-            color: #f0f6fc;
-            font-weight: 500;
-        }
-        .links a.download-btn i {
-            color: #f0f6fc;
-        }
-        .links a.download-btn:hover {
-            background: #1f6feb60;
-            border-color: #79c0ff;
-            box-shadow: 0 6px 20px rgba(88, 166, 255, 0.3);
         }
 
         /* ===== 项目区域 ===== */
@@ -415,9 +432,14 @@
                 游戏逆向 · 二进制分析 · 光遇技术研究
                 <span class="cursor-blink">|</span>
             </p>
-            <button class="lang-switch" id="langBtn">
-                <i class="fas fa-globe"></i> English
-            </button>
+            <div class="header-actions">
+                <button class="lang-switch" id="langBtn">
+                    <i class="fas fa-globe"></i> English
+                </button>
+                <button class="download-btn" id="downloadBtn">
+                    <i class="fas fa-file-archive"></i> <span id="downloadLabel">下载文件整合</span>
+                </button>
+            </div>
             <div class="links" id="linksContainer"></div>
         </header>
 
@@ -520,7 +542,7 @@
 
 
         // ============================================================
-        // 2. 国际化配置
+        // 2. 国际化配置 (新增下载按钮文本)
         // ============================================================
         const i18n = {
             zh: {
@@ -538,7 +560,8 @@
                 linkSite: '个人站点',
                 linkQQ: 'QQ 联系',
                 linkMail: '邮箱',
-                download: '下载文件整合'   // 新增
+                downloadLabel: '下载文件整合',
+                downloadError: '获取下载链接失败'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -555,7 +578,8 @@
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
                 linkMail: 'Email',
-                download: 'Download File Consolidation'  // 新增
+                downloadLabel: 'Download File Consolidation',
+                downloadError: 'Failed to get download link'
             }
         };
 
@@ -623,7 +647,6 @@
                         <a href="https://skygf-link.infinityfree.me" target="_blank"><i class="fas fa-globe"></i> ${t.linkSite}</a>
                         <a href="https://qm.qq.com/q/v06Uaf7Gqm" target="_blank"><i class="fab fa-qq"></i> ${t.linkQQ}</a>
                         <a href="mailto:3787533101@qq.com"><i class="fas fa-envelope"></i> ${t.linkMail}</a>
-                        <a href="https://github.com/skyIshier/skyIshier.github.io/releases/" target="_blank" class="download-btn"><i class="fas fa-download"></i> ${t.download}</a>
                     `;
         }
 
@@ -636,6 +659,7 @@
             document.getElementById('projectsTitle').innerHTML = `<i class="fas fa-code-branch"></i> ${t.projectsTitle}`;
             document.getElementById('footer').innerHTML =
                 `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> ${t.footer.split('·')[1]?.trim() || t.footer}</span>`;
+            document.getElementById('downloadLabel').textContent = t.downloadLabel;
             document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
             renderLinks();
         }
@@ -649,12 +673,10 @@
             container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
 
             try {
-                // 第一步：获取仓库列表
                 const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100');
                 if (!res.ok) throw new Error('API error');
                 const repos = await res.json();
 
-                // 过滤掉个人主页仓库
                 const filtered = repos.filter(r => !r.name.includes('github.io'));
 
                 if (filtered.length === 0) {
@@ -662,7 +684,6 @@
                     return;
                 }
 
-                // 第二步：为每个项目获取详细语言信息 (参考您的 useGitHubRepos)
                 const reposWithLang = await Promise.all(
                     filtered.map(async (repo) => {
                         try {
@@ -671,7 +692,6 @@
                             const langs = Object.keys(langData);
 
                             if (langs.length > 0) {
-                                // 找出字节数最多的语言作为主要语言
                                 let maxLang = langs[0];
                                 let maxBytes = langData[maxLang];
                                 for (const [lang, bytes] of Object.entries(langData)) {
@@ -694,15 +714,12 @@
                     })
                 );
 
-                // 第三步：渲染
                 container.innerHTML = reposWithLang.map(repo => {
                     const desc = repo.description || '-';
                     const primaryLang = repo.language;
                     const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
                     const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
-
-                    // 关键：直接显示语言名，如果没有语言才显示提示
                     const langDisplay = primaryLang || '未检测到代码';
 
                     return `
@@ -732,7 +749,75 @@
         }
 
         // ============================================================
-        // 6. 切换语言
+        // 6. 下载功能：获取最新 release 中的 File-Consolidation.zip
+        // ============================================================
+        async function fetchLatestReleaseDownloadUrl() {
+            try {
+                const res = await fetch('https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest');
+                if (!res.ok) throw new Error('Release API error');
+                const release = await res.json();
+                // 查找名称为 File-Consolidation.zip 的 asset
+                const asset = release.assets.find(a => a.name === 'File-Consolidation.zip');
+                if (asset) {
+                    return asset.browser_download_url;
+                } else {
+                    // 如果没有精确匹配，尝试找包含 Consolidation 的 asset
+                    const fallback = release.assets.find(a => a.name.includes('Consolidation') && a.name.endsWith('.zip'));
+                    return fallback ? fallback.browser_download_url : null;
+                }
+            } catch (e) {
+                console.warn('获取 release 失败:', e);
+                return null;
+            }
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', async function(e) {
+            const btn = this;
+            const originalText = document.getElementById('downloadLabel').textContent;
+            const t = i18n[currentLang];
+
+            // 防止重复点击
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            document.getElementById('downloadLabel').textContent = '⏳ 获取链接...';
+
+            try {
+                const url = await fetchLatestReleaseDownloadUrl();
+                if (url) {
+                    // 创建隐藏的 a 标签触发下载
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'File-Consolidation.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    document.getElementById('downloadLabel').textContent = '✅ 已开始下载';
+                    setTimeout(() => {
+                        document.getElementById('downloadLabel').textContent = t.downloadLabel;
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }, 2500);
+                } else {
+                    document.getElementById('downloadLabel').textContent = '⚠️ ' + t.downloadError;
+                    setTimeout(() => {
+                        document.getElementById('downloadLabel').textContent = t.downloadLabel;
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }, 2500);
+                }
+            } catch (err) {
+                document.getElementById('downloadLabel').textContent = '⚠️ ' + t.downloadError;
+                setTimeout(() => {
+                    document.getElementById('downloadLabel').textContent = t.downloadLabel;
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }, 2500);
+            }
+        });
+
+        // ============================================================
+        // 7. 切换语言
         // ============================================================
         document.getElementById('langBtn').addEventListener('click', () => {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
@@ -744,7 +829,7 @@
         });
 
         // ============================================================
-        // 7. 初始化
+        // 8. 初始化
         // ============================================================
         renderText();
         fetchRepos();
