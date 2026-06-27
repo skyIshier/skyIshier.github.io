@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>skyIshier | 十二的主页</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 60px 24px; }
+        
+        /* 头部区域 */
+        header { text-align: center; margin-bottom: 60px; }
+        .avatar {
+            width: 120px; height: 120px; border-radius: 50%;
+            border: 3px solid #30363d; margin-bottom: 20px;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 12px; }
+        .bio {
+            color: #8b949e; font-size: 1.1rem; max-width: 600px;
+            margin: 0 auto 24px;
+        }
+        .lang-switch {
+            background: #21262d; border: 1px solid #30363d;
+            color: #e6edf3; padding: 8px 16px; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .lang-switch:hover { background: #30363d; border-color: #58a6ff; }
+        
+        .links {
+            display: flex; gap: 16px; justify-content: center;
+            flex-wrap: wrap; margin-top: 24px;
+        }
+        .links a {
+            color: #58a6ff; text-decoration: none;
+            padding: 6px 12px; border: 1px solid #30363d;
+            border-radius: 6px; transition: all 0.2s;
+        }
+        .links a:hover { background: #1f6feb20; border-color: #58a6ff; }
+
+        /* 项目区域 */
+        section { margin-bottom: 60px; }
+        .section-title {
+            font-size: 1.5rem; margin-bottom: 24px;
+            padding-bottom: 12px; border-bottom: 1px solid #30363d;
+        }
+        .repo-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        .repo-card {
+            background: #161b22; border: 1px solid #30363d;
+            border-radius: 8px; padding: 20px;
+            transition: all 0.25s; text-decoration: none;
+            color: inherit; display: block;
+        }
+        .repo-card:hover {
+            border-color: #58a6ff; transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(88, 166, 255, 0.1);
+        }
+        .repo-name {
+            font-size: 1.1rem; font-weight: 600;
+            color: #58a6ff; margin-bottom: 8px;
+        }
+        .repo-desc { color: #8b949e; font-size: 0.95rem; }
+        .repo-meta {
+            margin-top: 12px; font-size: 0.85rem; color: #6e7681;
+            display: flex; gap: 16px;
+        }
+
+        /* 加载状态 */
+        .loading { text-align: center; color: #8b949e; padding: 40px; }
+
+        /* 页脚 */
+        footer {
+            text-align: center; color: #6e7681;
+            font-size: 0.9rem; padding-top: 40px;
+            border-top: 1px solid #30363d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img class="avatar" src="https://avatars.githubusercontent.com/skyIshier" alt="avatar">
+            <h1 id="username">skyIshier | 十二</h1>
+            <p class="bio" id="bio">游戏逆向 / 二进制分析 / 光遇技术研究</p>
+            <button class="lang-switch" id="langBtn">English</button>
+            
+            <div class="links" id="links">
+                <a href="https://github.com/skyIshier" target="_blank">GitHub</a>
+                <a href="https://skygf-link.infinityfree.me" target="_blank">个人站点</a>
+                <a href="https://qm.qq.com/q/v06Uaf7Gqm" target="_blank">QQ 联系</a>
+                <a href="mailto:3787533101@qq.com">邮箱</a>
+            </div>
+        </header>
+
+        <section>
+            <h2 class="section-title" id="projectsTitle">开源项目</h2>
+            <div id="repoContainer" class="repo-grid">
+                <div class="loading">加载项目中...</div>
+            </div>
+        </section>
+
+        <footer id="footer">
+            © 2026 skyIshier · Made with ❤️ for Sky
+        </footer>
+    </div>
+
+    <script>
+        // 双语语言包
+        const i18n = {
+            zh: {
+                username: 'skyIshier | 十二',
+                bio: '游戏逆向 / 二进制分析 / 光遇技术研究',
+                langBtn: 'English',
+                projectsTitle: '开源项目',
+                loading: '加载项目中...',
+                footer: '© 2026 skyIshier · 专注光遇技术研究',
+                stars: '星标',
+                forks: '复刻'
+            },
+            en: {
+                username: 'skyIshier | Shier',
+                bio: 'Game Reverse Engineering / Binary Analysis / Sky Research',
+                langBtn: '中文',
+                projectsTitle: 'Open Source Projects',
+                loading: 'Loading projects...',
+                footer: '© 2026 skyIshier · Built for Sky',
+                stars: 'stars',
+                forks: 'forks'
+            }
+        };
+
+        // 获取当前语言
+        function getLang() {
+            const params = new URLSearchParams(window.location.search);
+            const urlLang = params.get('lang');
+            if (urlLang && i18n[urlLang]) return urlLang;
+            return navigator.language.startsWith('zh') ? 'zh' : 'en';
+        }
+
+        let currentLang = getLang();
+
+        // 渲染页面文本
+        function renderText() {
+            const t = i18n[currentLang];
+            document.getElementById('username').textContent = t.username;
+            document.getElementById('bio').textContent = t.bio;
+            document.getElementById('langBtn').textContent = t.langBtn;
+            document.getElementById('projectsTitle').textContent = t.projectsTitle;
+            document.getElementById('footer').textContent = t.footer;
+            document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+        }
+
+        // 拉取仓库列表
+        async function fetchRepos() {
+            const container = document.getElementById('repoContainer');
+            container.innerHTML = `<div class="loading">${i18n[currentLang].loading}</div>`;
+            
+            try {
+                const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100');
+                const repos = await res.json();
+                
+                // 过滤掉个人主页仓库，可自定义置顶规则
+                const filtered = repos.filter(r => !r.name.includes('skyIshier.github.io'));
+                
+                container.innerHTML = filtered.map(repo => `
+                    <a href="${repo.html_url}" target="_blank" class="repo-card">
+                        <div class="repo-name">${repo.name}</div>
+                        <div class="repo-desc">${repo.description || '-'}</div>
+                        <div class="repo-meta">
+                            <span>⭐ ${repo.stargazers_count} ${i18n[currentLang].stars}</span>
+                            <span>🔀 ${repo.forks_count} ${i18n[currentLang].forks}</span>
+                        </div>
+                    </a>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="loading">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // 语言切换
+        document.getElementById('langBtn').addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            const url = new URL(window.location);
+            url.searchParams.set('lang', currentLang);
+            window.history.replaceState({}, '', url);
+            renderText();
+            fetchRepos();
+        });
+
+        // 初始化
+        renderText();
+        fetchRepos();
+    </script>
+</body>
+</html>
