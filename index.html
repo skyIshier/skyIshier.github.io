@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 强制禁止缓存 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>skyIshier · 十二 | 动态主页</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -40,7 +44,6 @@
             padding: 40px 24px 60px;
         }
 
-        /* ===== 头部 ===== */
         header {
             text-align: center;
             margin-bottom: 50px;
@@ -80,15 +83,8 @@
         }
 
         @keyframes pulse-dot {
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 0.9;
-            }
-            50% {
-                transform: scale(1.2);
-                opacity: 1;
-            }
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.2); opacity: 1; }
         }
 
         h1 {
@@ -224,7 +220,6 @@
             color: #f0f6fc;
         }
 
-        /* ===== 项目区域 ===== */
         section {
             margin-bottom: 50px;
         }
@@ -383,12 +378,8 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         footer {
@@ -411,61 +402,28 @@
         }
 
         @keyframes heartBeat {
-            0%,
-            100% {
-                transform: scale(1);
-            }
-            10% {
-                transform: scale(1.2);
-            }
-            20% {
-                transform: scale(1);
-            }
-            30% {
-                transform: scale(1.1);
-            }
-            40% {
-                transform: scale(1);
-            }
+            0%, 100% { transform: scale(1); }
+            10% { transform: scale(1.2); }
+            20% { transform: scale(1); }
+            30% { transform: scale(1.1); }
+            40% { transform: scale(1); }
         }
 
         @media (max-width: 600px) {
-            .container {
-                padding: 24px 16px 40px;
-            }
-            h1 {
-                font-size: 2.2rem;
-            }
-            .repo-grid {
-                grid-template-columns: 1fr;
-            }
-            .avatar {
-                width: 100px;
-                height: 100px;
-            }
-            .status-dot {
-                width: 14px;
-                height: 14px;
-                bottom: 4px;
-                right: 4px;
-            }
-            .release-tag {
-                font-size: 0.8rem;
-                padding: 2px 10px;
-            }
+            .container { padding: 24px 16px 40px; }
+            h1 { font-size: 2.2rem; }
+            .repo-grid { grid-template-columns: 1fr; }
+            .avatar { width: 100px; height: 100px; }
+            .status-dot { width: 14px; height: 14px; bottom: 4px; right: 4px; }
+            .release-tag { font-size: 0.8rem; padding: 2px 10px; }
         }
 
         .cursor-blink {
             animation: blink 1s step-end infinite;
         }
         @keyframes blink {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
     </style>
 </head>
@@ -549,10 +507,8 @@
                 update() {
                     this.x += this.vx;
                     this.y += this.vy;
-                    if (this.x < 0 || this.x > width) { this.vx *= -1;
-                        this.x += this.vx; }
-                    if (this.y < 0 || this.y > height) { this.vy *= -1;
-                        this.y += this.vy; }
+                    if (this.x < 0 || this.x > width) { this.vx *= -1; this.x += this.vx; }
+                    if (this.y < 0 || this.y > height) { this.vy *= -1; this.y += this.vy; }
                 }
                 draw() {
                     ctx.beginPath();
@@ -587,8 +543,7 @@
 
             function animate() {
                 ctx.clearRect(0, 0, width, height);
-                particles.forEach(p => { p.update();
-                    p.draw(); });
+                particles.forEach(p => { p.update(); p.draw(); });
                 drawLines();
                 requestAnimationFrame(animate);
             }
@@ -617,7 +572,8 @@
                 linkMail: '邮箱',
                 downloadLabel: '下载文件整合',
                 downloadError: '获取下载链接失败',
-                retry: '重试'
+                retry: '重试',
+                noRepo: '暂无公开项目'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -636,7 +592,8 @@
                 linkMail: 'Email',
                 downloadLabel: 'Download File Consolidation',
                 downloadError: 'Failed to get download link',
-                retry: 'Retry'
+                retry: 'Retry',
+                noRepo: 'No public repos'
             }
         };
 
@@ -722,7 +679,7 @@
         }
 
         // ============================================================
-        // 5. 获取 GitHub 仓库 (增强错误处理 + 重试)
+        // 5. 获取 GitHub 仓库（直接使用 repo.language，无需额外请求）
         // ============================================================
         async function fetchRepos() {
             const container = document.getElementById('repoContainer');
@@ -731,20 +688,25 @@
 
             try {
                 const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 15000); // 15s 超时
+                const timeout = setTimeout(() => controller.abort(), 15000);
 
-                const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100', {
-                    signal: controller.signal,
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json'
+                const res = await fetch(
+                    'https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100&_=' + Date.now(),
+                    {
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Cache-Control': 'no-cache, no-store'
+                        },
+                        cache: 'no-store'
                     }
-                });
+                );
                 clearTimeout(timeout);
 
                 if (!res.ok) {
                     let errMsg = `GitHub API 错误 (${res.status})`;
                     if (res.status === 403) {
-                        errMsg = 'API 速率限制已用尽，请稍后再试或配置访问令牌。';
+                        errMsg = 'API 速率限制已用尽，请稍后再试。';
                     } else if (res.status === 404) {
                         errMsg = '用户不存在或仓库不可访问。';
                     }
@@ -752,49 +714,18 @@
                 }
 
                 const repos = await res.json();
-                const filtered = repos.filter(r => !r.name.includes('github.io'));
+                // 过滤掉个人主页仓库（如 skyIshier.github.io）
+                const filtered = repos.filter(r => !r.name.toLowerCase().includes('github.io'));
 
                 if (filtered.length === 0) {
-                    container.innerHTML = `<div class="loading">✨ 暂无公开项目</div>`;
+                    container.innerHTML = `<div class="loading">✨ ${t.noRepo}</div>`;
                     return;
                 }
 
-                // 获取每个仓库的语言信息（并行）
-                const reposWithLang = await Promise.all(
-                    filtered.map(async (repo) => {
-                        try {
-                            const langRes = await fetch(repo.languages_url, {
-                                headers: { 'Accept': 'application/vnd.github.v3+json' }
-                            });
-                            if (!langRes.ok) throw new Error('Lang API error');
-                            const langData = await langRes.json();
-                            const langs = Object.keys(langData);
-                            if (langs.length > 0) {
-                                let maxLang = langs[0];
-                                let maxBytes = langData[maxLang];
-                                for (const [lang, bytes] of Object.entries(langData)) {
-                                    if (bytes > maxBytes) {
-                                        maxLang = lang;
-                                        maxBytes = bytes;
-                                    }
-                                }
-                                repo.language = maxLang;
-                                repo.allLanguages = langs;
-                            } else {
-                                repo.language = null;
-                                repo.allLanguages = [];
-                            }
-                        } catch (e) {
-                            repo.language = null;
-                            repo.allLanguages = [];
-                        }
-                        return repo;
-                    })
-                );
-
-                container.innerHTML = reposWithLang.map(repo => {
+                // 直接使用 repo.language，无需额外请求
+                container.innerHTML = filtered.map(repo => {
                     const desc = repo.description || '-';
-                    const primaryLang = repo.language;
+                    const primaryLang = repo.language || null;
                     const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
                     const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
@@ -837,7 +768,7 @@
         }
 
         // ============================================================
-        // 6. 下载功能 + Tag 显示 (增强错误处理)
+        // 6. 下载功能 + Tag 显示 (同样禁用缓存)
         // ============================================================
         let cachedReleaseInfo = null;
 
@@ -850,10 +781,17 @@
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 10000);
 
-                const res = await fetch('https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest', {
-                    signal: controller.signal,
-                    headers: { 'Accept': 'application/vnd.github.v3+json' }
-                });
+                const res = await fetch(
+                    'https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest?_=' + Date.now(),
+                    {
+                        signal: controller.signal,
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Cache-Control': 'no-cache, no-store'
+                        },
+                        cache: 'no-store'
+                    }
+                );
                 clearTimeout(timeout);
 
                 if (!res.ok) {
@@ -870,7 +808,7 @@
 
                 cachedReleaseInfo = { tag, downloadUrl };
 
-                // 直接显示 tag（用户会设置为纯数字，我们不做额外处理）
+                // 直接显示纯数字 tag（用户可自定义）
                 tagEl.textContent = tag || '—';
                 if (!tag) tagEl.classList.add('error');
 
@@ -903,7 +841,6 @@
             try {
                 let info = cachedReleaseInfo;
                 if (!info || !info.downloadUrl) {
-                    // 重新获取
                     info = await fetchLatestReleaseInfo();
                 }
                 if (info && info.downloadUrl) {
@@ -947,7 +884,7 @@
             window.history.replaceState({}, '', url);
             renderText();
             fetchRepos();
-            // tag 显示不跟随语言，保持原样
+            // Tag 不跟随语言变化
         });
 
         // ============================================================
@@ -957,4 +894,4 @@
         fetchRepos();
     </script>
 </body>
-    </html>
+</html>
