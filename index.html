@@ -603,8 +603,8 @@
                 downloadError: '获取下载链接失败',
                 retry: '重试',
                 noRepo: '暂无公开项目',
-                networkError: '无法连接 GitHub API，请检查网络或开启 VPN/代理',
-                hint: '💡 提示：尝试无痕模式、关闭广告拦截器，或切换网络后按 <kbd>Ctrl+Shift+R</kbd> 强制刷新'
+                usingProxy: '使用代理中...',
+                proxyFailed: '代理请求失败，请检查网络或稍后再试'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -625,8 +625,8 @@
                 downloadError: 'Failed to get download link',
                 retry: 'Retry',
                 noRepo: 'No public repos',
-                networkError: 'Cannot reach GitHub API, please check network or enable VPN/proxy',
-                hint: '💡 Try incognito mode, disable ad-blockers, or switch network and press <kbd>Ctrl+Shift+R</kbd> to hard refresh'
+                usingProxy: 'Using proxy...',
+                proxyFailed: 'Proxy request failed, check network or try later'
             }
         };
 
@@ -712,42 +712,52 @@
         }
 
         // ============================================================
-        // 5. 获取 GitHub 仓库（带自动重试）
+        // 5. 带代理的 fetch 函数
         // ============================================================
-        async function fetchRepos(retryCount = 3) {
+        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+
+        async function fetchWithProxy(url, useProxy = false) {
+            const targetUrl = useProxy ? PROXY_URL + encodeURIComponent(url) : url;
+            const response = await fetch(targetUrl, {
+                cache: 'no-store',
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Cache-Control': 'no-cache, no-store'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return await response.json();
+        }
+
+        // ============================================================
+        // 6. 获取 GitHub 仓库（自动切换代理）
+        // ============================================================
+        async function fetchRepos(retryCount = 2) {
             const container = document.getElementById('repoContainer');
             const t = i18n[currentLang];
             container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
 
             try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 15000);
+                let data;
+                let useProxy = false;
 
-                const res = await fetch(
-                    `https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100&_=${Date.now()}`,
-                    {
-                        signal: controller.signal,
-                        headers: {
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Cache-Control': 'no-cache, no-store'
-                        },
-                        cache: 'no-store'
-                    }
-                );
-                clearTimeout(timeout);
-
-                if (!res.ok) {
-                    let errMsg = `GitHub API 错误 (${res.status})`;
-                    if (res.status === 403) {
-                        errMsg = 'API 速率限制已用尽，请稍后重试（或使用无痕模式/清除缓存后强制刷新 Ctrl+Shift+R）';
-                    } else if (res.status === 404) {
-                        errMsg = '用户不存在或仓库不可访问。';
-                    }
-                    throw new Error(errMsg);
+                // 先尝试直连
+                try {
+                    const url = `https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100&_=${Date.now()}`;
+                    data = await fetchWithProxy(url, false);
+                } catch (directError) {
+                    console.warn('Direct fetch failed, trying proxy...', directError);
+                    // 如果直连失败（Failed to fetch），使用代理
+                    useProxy = true;
+                    container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.usingProxy}</div>`;
+                    const proxyUrl = `https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100&_=${Date.now()}`;
+                    data = await fetchWithProxy(proxyUrl, true);
                 }
 
-                const repos = await res.json();
-                const filtered = repos.filter(r => !r.name.toLowerCase().includes('github.io'));
+                // 过滤掉 github.io 仓库
+                const filtered = data.filter(r => !r.name.toLowerCase().includes('github.io'));
 
                 if (filtered.length === 0) {
                     container.innerHTML = `<div class="loading">✨ ${t.noRepo}</div>`;
@@ -786,34 +796,23 @@
             } catch (e) {
                 console.warn('Fetch repos error:', e);
                 let errorMsg = e.message || '未知错误';
-                if (e.name === 'AbortError') {
-                    errorMsg = '请求超时，请检查网络连接。';
-                }
-                // 判断是否为网络错误（Failed to fetch）
-                if (e.message === 'Failed to fetch' || e.type === 'system' || e.message.includes('NetworkError')) {
-                    errorMsg = i18n[currentLang].networkError;
-                }
-
-                // 如果还有重试次数，自动重试
-                if (retryCount > 0 && (e.message === 'Failed to fetch' || e.name === 'AbortError')) {
-                    container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> 网络不稳定，正在重试 (${retryCount})...</div>`;
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    return fetchRepos(retryCount - 1);
+                if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+                    errorMsg = i18n[currentLang].proxyFailed;
                 }
 
                 container.innerHTML = `
                             <div class="loading error">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <div>加载失败：${errorMsg}</div>
-                                <div class="hint">${i18n[currentLang].hint}</div>
-                                <button class="retry-btn" onclick="fetchRepos(3)"><i class="fas fa-redo"></i> ${i18n[currentLang].retry}</button>
+                                <div class="hint">💡 请检查网络连接，或尝试使用 VPN/代理</div>
+                                <button class="retry-btn" onclick="fetchRepos(2)"><i class="fas fa-redo"></i> ${i18n[currentLang].retry}</button>
                             </div>
                         `;
             }
         }
 
         // ============================================================
-        // 6. 下载功能 + Tag 显示 (同样禁用缓存)
+        // 7. 下载功能 + Tag 显示（同样自动切换代理）
         // ============================================================
         let cachedReleaseInfo = null;
 
@@ -823,32 +822,20 @@
             tagEl.classList.remove('error');
 
             try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 10000);
+                let data;
+                let useProxy = false;
+                const url = `https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest?_=${Date.now()}`;
 
-                const res = await fetch(
-                    `https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest?_=${Date.now()}`,
-                    {
-                        signal: controller.signal,
-                        headers: {
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Cache-Control': 'no-cache, no-store'
-                        },
-                        cache: 'no-store'
-                    }
-                );
-                clearTimeout(timeout);
-
-                if (!res.ok) {
-                    let errMsg = `API 错误 (${res.status})`;
-                    if (res.status === 403) errMsg = '速率限制，请稍后强制刷新';
-                    else if (res.status === 404) errMsg = '暂无 Release';
-                    throw new Error(errMsg);
+                try {
+                    data = await fetchWithProxy(url, false);
+                } catch (directError) {
+                    console.warn('Direct release fetch failed, trying proxy...', directError);
+                    useProxy = true;
+                    data = await fetchWithProxy(url, true);
                 }
 
-                const release = await res.json();
-                const tag = release.tag_name || '';
-                const asset = release.assets.find(a => a.name === 'File-Consolidation.zip');
+                const tag = data.tag_name || '';
+                const asset = data.assets ? data.assets.find(a => a.name === 'File-Consolidation.zip') : null;
                 const downloadUrl = asset ? asset.browser_download_url : null;
 
                 cachedReleaseInfo = { tag, downloadUrl };
@@ -859,8 +846,9 @@
             } catch (e) {
                 console.warn('获取 release 失败:', e);
                 let errMsg = e.message || '获取失败';
-                if (e.name === 'AbortError') errMsg = '请求超时';
-                else if (e.message === 'Failed to fetch') errMsg = '网络错误，请检查连接';
+                if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
+                    errMsg = '网络错误，请检查连接';
+                }
                 tagEl.textContent = '⚠️ ' + errMsg;
                 tagEl.classList.add('error');
                 cachedReleaseInfo = { tag: null, downloadUrl: null };
@@ -919,7 +907,7 @@
         });
 
         // ============================================================
-        // 7. 切换语言
+        // 8. 切换语言
         // ============================================================
         document.getElementById('langBtn').addEventListener('click', () => {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
@@ -930,10 +918,10 @@
         });
 
         // ============================================================
-        // 8. 初始化
+        // 9. 初始化
         // ============================================================
         renderText();
-        fetchRepos(3); // 最多重试3次
+        fetchRepos(2);
     </script>
 </body>
 </html>
