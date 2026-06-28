@@ -6,7 +6,6 @@
     <title>skyIshier · 十二 | 动态主页</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* 样式与之前保持一致，新增版本号标签样式 */
         * {
             margin: 0;
             padding: 0;
@@ -41,6 +40,7 @@
             padding: 40px 24px 60px;
         }
 
+        /* ===== 头部 ===== */
         header {
             text-align: center;
             margin-bottom: 50px;
@@ -165,6 +165,7 @@
             color: #f0f6fc;
         }
 
+        /* ===== 项目区域 ===== */
         section {
             margin-bottom: 50px;
         }
@@ -220,27 +221,12 @@
             margin-bottom: 6px;
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
             gap: 8px;
         }
 
         .repo-name i {
             font-size: 0.9rem;
             color: #6e7681;
-        }
-
-        /* 版本号标签 */
-        .release-tag {
-            font-size: 0.7rem;
-            font-weight: 500;
-            background: rgba(88, 166, 255, 0.15);
-            border: 1px solid rgba(88, 166, 255, 0.25);
-            color: #58a6ff;
-            padding: 0.1rem 0.6rem;
-            border-radius: 20px;
-            letter-spacing: 0.02em;
-            margin-left: auto;
-            flex-shrink: 0;
         }
 
         .repo-desc {
@@ -382,11 +368,6 @@
                 bottom: 4px;
                 right: 4px;
             }
-            .release-tag {
-                font-size: 0.6rem;
-                padding: 0.05rem 0.4rem;
-                margin-left: 0;
-            }
         }
 
         .cursor-blink {
@@ -445,7 +426,7 @@
 
     <script>
         // ============================================================
-        // 1. 粒子背景 (保持不变)
+        // 1. 粒子背景
         // ============================================================
         (function initParticles() {
             const canvas = document.getElementById('particle-canvas');
@@ -540,8 +521,7 @@
                 linkGithub: 'GitHub',
                 linkSite: '个人站点',
                 linkQQ: 'QQ 联系',
-                linkMail: '邮箱',
-                release: '最新版本'
+                linkMail: '邮箱'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -557,8 +537,7 @@
                 linkGithub: 'GitHub',
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
-                linkMail: 'Email',
-                release: 'Latest release'
+                linkMail: 'Email'
             }
         };
 
@@ -616,7 +595,7 @@
         }
 
         // ============================================================
-        // 4. 渲染函数 (链接、文本)
+        // 4. 渲染函数
         // ============================================================
         function renderLinks() {
             const t = i18n[currentLang];
@@ -643,7 +622,7 @@
         }
 
         // ============================================================
-        // 5. 获取 GitHub 仓库 + 最新 Release 版本号
+        // 5. 获取 GitHub 仓库 (完全参考您的 useGitHubRepos)
         // ============================================================
         async function fetchRepos() {
             const container = document.getElementById('repoContainer');
@@ -664,16 +643,16 @@
                     return;
                 }
 
-                // 第二步：为每个项目获取详细语言信息 + 最新 release
-                const reposWithData = await Promise.all(
+                // 第二步：为每个项目获取详细语言信息 (参考您的 useGitHubRepos)
+                const reposWithLang = await Promise.all(
                     filtered.map(async (repo) => {
-                        // 获取语言
                         try {
                             const langRes = await fetch(repo.languages_url);
                             const langData = await langRes.json();
                             const langs = Object.keys(langData);
 
                             if (langs.length > 0) {
+                                // 找出字节数最多的语言作为主要语言
                                 let maxLang = langs[0];
                                 let maxBytes = langData[maxLang];
                                 for (const [lang, bytes] of Object.entries(langData)) {
@@ -692,39 +671,25 @@
                             repo.language = null;
                             repo.allLanguages = [];
                         }
-
-                        // 获取最新 release (只获取 tag_name)
-                        try {
-                            const releaseRes = await fetch(repo.url + '/releases/latest');
-                            if (releaseRes.ok) {
-                                const releaseData = await releaseRes.json();
-                                repo.latestReleaseTag = releaseData.tag_name || null;
-                            } else {
-                                repo.latestReleaseTag = null;
-                            }
-                        } catch (e) {
-                            repo.latestReleaseTag = null;
-                        }
-
                         return repo;
                     })
                 );
 
                 // 第三步：渲染
-                container.innerHTML = reposWithData.map(repo => {
+                container.innerHTML = reposWithLang.map(repo => {
                     const desc = repo.description || '-';
                     const primaryLang = repo.language;
                     const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
                     const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
+
+                    // 关键：直接显示语言名，如果没有语言才显示提示
                     const langDisplay = primaryLang || '未检测到代码';
-                    const releaseTag = repo.latestReleaseTag || null;
 
                     return `
                                 <a href="${repo.html_url}" target="_blank" class="repo-card">
                                     <div class="repo-name">
                                         <i class="fas fa-folder-open"></i> ${repo.name}
-                                        ${releaseTag ? `<span class="release-tag">${releaseTag}</span>` : ''}
                                     </div>
                                     <div class="repo-desc">${desc}</div>
                                     <div class="repo-extra">
