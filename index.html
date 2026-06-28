@@ -6,7 +6,6 @@
     <title>skyIshier · 十二 | 动态主页</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* 样式与之前保持一致，新增版本号标签样式 */
         * {
             margin: 0;
             padding: 0;
@@ -130,7 +129,6 @@
             transform: translateY(-2px);
         }
 
-        /* ===== 新增下载按钮样式 ===== */
         .download-btn {
             background: #1f6feb;
             border: none;
@@ -161,7 +159,6 @@
             transform: none;
         }
 
-        /* 全局版本号标签（头部） */
         .global-release-tag {
             font-size: 0.9rem;
             color: #58a6ff;
@@ -297,7 +294,6 @@
             color: #6e7681;
         }
 
-        /* 每个仓库卡片内的版本号标签（保留原有） */
         .release-tag {
             font-size: 0.7rem;
             font-weight: 500;
@@ -490,7 +486,6 @@
                 游戏逆向 · 二进制分析 · 光遇技术研究
                 <span class="cursor-blink">|</span>
             </p>
-            <!-- 头部操作区：语言切换 + 下载按钮 + 版本号 -->
             <div class="header-actions">
                 <button class="lang-switch" id="langBtn">
                     <i class="fas fa-globe"></i> English
@@ -524,7 +519,7 @@
 
     <script>
         // ============================================================
-        // 1. 粒子背景 (保持不变)
+        // 1. 粒子背景
         // ============================================================
         (function initParticles() {
             const canvas = document.getElementById('particle-canvas');
@@ -699,7 +694,7 @@
         }
 
         // ============================================================
-        // 4. 渲染函数 (链接、文本)
+        // 4. 渲染函数
         // ============================================================
         function renderLinks() {
             const t = i18n[currentLang];
@@ -727,7 +722,12 @@
         }
 
         // ============================================================
-        // 5. 获取 GitHub 仓库 + 最新 Release 版本号（每个仓库卡片内）
+        // 5. 全局缓存：用于头部版本号和下载
+        // ============================================================
+        let globalReleaseInfo = { tag: null, downloadUrl: null };
+
+        // ============================================================
+        // 6. 获取 GitHub 仓库（旧代码逻辑，增加缓存全局版本号）
         // ============================================================
         async function fetchRepos() {
             const container = document.getElementById('repoContainer');
@@ -774,12 +774,29 @@
                             repo.allLanguages = [];
                         }
 
-                        // 获取最新 release (只获取 tag_name)
+                        // 获取最新 release
                         try {
                             const releaseRes = await fetch(repo.url + '/releases/latest');
                             if (releaseRes.ok) {
                                 const releaseData = await releaseRes.json();
                                 repo.latestReleaseTag = releaseData.tag_name || null;
+
+                                // ★ 关键：如果是 skyIshier.github.io 仓库，缓存到全局
+                                if (repo.name === 'skyIshier.github.io') {
+                                    const asset = releaseData.assets ? releaseData.assets.find(a => a.name === 'File-Consolidation.zip') : null;
+                                    globalReleaseInfo = {
+                                        tag: releaseData.tag_name || null,
+                                        downloadUrl: asset ? asset.browser_download_url : null
+                                    };
+                                    // 更新头部版本号
+                                    const tagEl = document.getElementById('globalReleaseTag');
+                                    if (globalReleaseInfo.tag) {
+                                        tagEl.textContent = globalReleaseInfo.tag;
+                                        tagEl.classList.remove('error');
+                                    } else {
+                                        tagEl.textContent = '—';
+                                    }
+                                }
                             } else {
                                 repo.latestReleaseTag = null;
                             }
@@ -828,46 +845,6 @@
         }
 
         // ============================================================
-        // 6. 新增：获取全局最新 Release（用于头部下载按钮和版本号）
-        // ============================================================
-        let globalReleaseInfo = { tag: null, downloadUrl: null };
-
-        async function fetchGlobalRelease() {
-            const tagEl = document.getElementById('globalReleaseTag');
-            tagEl.textContent = '⋯';
-            tagEl.classList.remove('error');
-
-            try {
-                const res = await fetch('https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest');
-                if (!res.ok) {
-                    // 如果是404表示没有release
-                    if (res.status === 404) {
-                        tagEl.textContent = '—';
-                        return;
-                    }
-                    throw new Error(`HTTP ${res.status}`);
-                }
-                const data = await res.json();
-                const tag = data.tag_name || null;
-                const asset = data.assets ? data.assets.find(a => a.name === 'File-Consolidation.zip') : null;
-                const downloadUrl = asset ? asset.browser_download_url : null;
-
-                globalReleaseInfo = { tag, downloadUrl };
-
-                if (tag) {
-                    tagEl.textContent = tag;
-                } else {
-                    tagEl.textContent = '—';
-                }
-            } catch (e) {
-                console.warn('获取全局 release 失败:', e);
-                tagEl.textContent = '⚠️ 获取失败';
-                tagEl.classList.add('error');
-                globalReleaseInfo = { tag: null, downloadUrl: null };
-            }
-        }
-
-        // ============================================================
         // 7. 下载按钮事件
         // ============================================================
         document.getElementById('downloadBtn').addEventListener('click', function() {
@@ -876,50 +853,30 @@
             const t = i18n[currentLang];
 
             if (btn.disabled) return;
-            btn.disabled = true;
-            btn.style.opacity = '0.7';
-            label.textContent = '⏳ 获取链接...';
 
-            // 如果还没有缓存或者缓存无效，重新获取
-            if (!globalReleaseInfo.downloadUrl) {
-                fetchGlobalRelease().then(() => {
-                    if (globalReleaseInfo.downloadUrl) {
-                        triggerDownload();
-                    } else {
-                        label.textContent = '⚠️ ' + t.downloadError;
-                        setTimeout(() => {
-                            label.textContent = t.downloadLabel;
-                            btn.disabled = false;
-                            btn.style.opacity = '1';
-                        }, 2500);
-                    }
-                });
+            if (globalReleaseInfo.downloadUrl) {
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+                label.textContent = '⏳ 准备下载...';
+
+                const a = document.createElement('a');
+                a.href = globalReleaseInfo.downloadUrl;
+                a.download = 'File-Consolidation.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                label.textContent = '✅ 已开始下载';
+                setTimeout(() => {
+                    label.textContent = t.downloadLabel;
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }, 2500);
             } else {
-                triggerDownload();
-            }
-
-            function triggerDownload() {
-                if (globalReleaseInfo.downloadUrl) {
-                    const a = document.createElement('a');
-                    a.href = globalReleaseInfo.downloadUrl;
-                    a.download = 'File-Consolidation.zip';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    label.textContent = '✅ 已开始下载';
-                    setTimeout(() => {
-                        label.textContent = i18n[currentLang].downloadLabel;
-                        btn.disabled = false;
-                        btn.style.opacity = '1';
-                    }, 2500);
-                } else {
-                    label.textContent = '⚠️ ' + i18n[currentLang].downloadError;
-                    setTimeout(() => {
-                        label.textContent = i18n[currentLang].downloadLabel;
-                        btn.disabled = false;
-                        btn.style.opacity = '1';
-                    }, 2500);
-                }
+                label.textContent = '⚠️ ' + t.downloadError;
+                setTimeout(() => {
+                    label.textContent = t.downloadLabel;
+                }, 2500);
             }
         });
 
@@ -933,7 +890,6 @@
             window.history.replaceState({}, '', url);
             renderText();
             fetchRepos();
-            // 全局版本号不随语言变化，保持原样
         });
 
         // ============================================================
@@ -941,7 +897,6 @@
         // ============================================================
         renderText();
         fetchRepos();
-        fetchGlobalRelease(); // 获取头部版本号
     </script>
 </body>
 </html>
