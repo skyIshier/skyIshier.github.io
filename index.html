@@ -477,6 +477,18 @@
 
     <script>
         // ============================================================
+        // 0. 强制刷新：如果 URL 没有 ?_t= 参数，自动添加
+        // ============================================================
+        (function ensureNoCache() {
+            if (!window.location.search.includes('_t=')) {
+                const sep = window.location.search ? '&' : '?';
+                const newUrl = window.location.href + sep + '_t=' + Date.now();
+                window.location.replace(newUrl);
+                return; // 终止执行，等待重定向
+            }
+        })();
+
+        // ============================================================
         // 1. 粒子背景
         // ============================================================
         (function initParticles() {
@@ -679,7 +691,7 @@
         }
 
         // ============================================================
-        // 5. 获取 GitHub 仓库（直接使用 repo.language，无需额外请求）
+        // 5. 获取 GitHub 仓库（直接使用 repo.language，避免额外请求）
         // ============================================================
         async function fetchRepos() {
             const container = document.getElementById('repoContainer');
@@ -691,7 +703,7 @@
                 const timeout = setTimeout(() => controller.abort(), 15000);
 
                 const res = await fetch(
-                    'https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100&_=' + Date.now(),
+                    `https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100&_=${Date.now()}`,
                     {
                         signal: controller.signal,
                         headers: {
@@ -706,7 +718,7 @@
                 if (!res.ok) {
                     let errMsg = `GitHub API 错误 (${res.status})`;
                     if (res.status === 403) {
-                        errMsg = 'API 速率限制已用尽，请稍后再试。';
+                        errMsg = 'API 速率限制已用尽，请稍后重试（或使用无痕模式/清除缓存后强制刷新 Ctrl+Shift+R）';
                     } else if (res.status === 404) {
                         errMsg = '用户不存在或仓库不可访问。';
                     }
@@ -714,7 +726,6 @@
                 }
 
                 const repos = await res.json();
-                // 过滤掉个人主页仓库（如 skyIshier.github.io）
                 const filtered = repos.filter(r => !r.name.toLowerCase().includes('github.io'));
 
                 if (filtered.length === 0) {
@@ -722,7 +733,7 @@
                     return;
                 }
 
-                // 直接使用 repo.language，无需额外请求
+                // 直接使用 repo.language
                 container.innerHTML = filtered.map(repo => {
                     const desc = repo.description || '-';
                     const primaryLang = repo.language || null;
@@ -761,9 +772,16 @@
                             <div class="loading error">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <div>加载失败：${errorMsg}</div>
+                                <div style="font-size:0.85rem; margin-top:8px; color:#8b949e;">
+                                    💡 提示：请按 <kbd>Ctrl+Shift+R</kbd>（或 <kbd>Ctrl+F5</kbd>）强制刷新页面
+                                </div>
                                 <button class="retry-btn" onclick="fetchRepos()"><i class="fas fa-redo"></i> ${i18n[currentLang].retry}</button>
                             </div>
                         `;
+                // 如果是 403 错误，5秒后自动重试一次
+                if (e.message && e.message.includes('速率限制')) {
+                    setTimeout(() => fetchRepos(), 5000);
+                }
             }
         }
 
@@ -782,7 +800,7 @@
                 const timeout = setTimeout(() => controller.abort(), 10000);
 
                 const res = await fetch(
-                    'https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest?_=' + Date.now(),
+                    `https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest?_=${Date.now()}`,
                     {
                         signal: controller.signal,
                         headers: {
@@ -796,7 +814,7 @@
 
                 if (!res.ok) {
                     let errMsg = `API 错误 (${res.status})`;
-                    if (res.status === 403) errMsg = '速率限制，请稍后';
+                    if (res.status === 403) errMsg = '速率限制，请稍后强制刷新';
                     else if (res.status === 404) errMsg = '暂无 Release';
                     throw new Error(errMsg);
                 }
@@ -808,7 +826,7 @@
 
                 cachedReleaseInfo = { tag, downloadUrl };
 
-                // 直接显示纯数字 tag（用户可自定义）
+                // 直接显示纯数字 tag（用户自定义）
                 tagEl.textContent = tag || '—';
                 if (!tag) tagEl.classList.add('error');
 
@@ -881,10 +899,9 @@
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             const url = new URL(window.location);
             url.searchParams.set('lang', currentLang);
-            window.history.replaceState({}, '', url);
-            renderText();
-            fetchRepos();
-            // Tag 不跟随语言变化
+            // 保留 _t 参数避免缓存
+            url.searchParams.set('_t', Date.now());
+            window.location.href = url.href;
         });
 
         // ============================================================
