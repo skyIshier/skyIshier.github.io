@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 强制禁止缓存 -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>skyIshier · 十二 | 动态主页</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* 样式与之前保持一致，新增版本号标签样式 */
         * {
             margin: 0;
             padding: 0;
@@ -83,8 +80,15 @@
         }
 
         @keyframes pulse-dot {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.2); opacity: 1; }
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
         }
 
         h1 {
@@ -126,6 +130,7 @@
             transform: translateY(-2px);
         }
 
+        /* ===== 新增下载按钮样式 ===== */
         .download-btn {
             background: #1f6feb;
             border: none;
@@ -150,16 +155,14 @@
             margin-right: 6px;
         }
 
-        .header-actions {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
+        .download-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        .release-tag {
+        /* 全局版本号标签（头部） */
+        .global-release-tag {
             font-size: 0.9rem;
             color: #58a6ff;
             font-weight: 500;
@@ -172,16 +175,26 @@
             line-height: 1.4;
             transition: all 0.2s;
             white-space: nowrap;
+            margin-left: 4px;
         }
 
-        .release-tag.error {
+        .global-release-tag.error {
             color: #f85149;
             border-color: #f85149;
         }
 
-        .release-tag:hover {
+        .global-release-tag:hover {
             border-color: #58a6ff;
             background: #2d333b;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .links {
@@ -275,12 +288,27 @@
             margin-bottom: 6px;
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
             gap: 8px;
         }
 
         .repo-name i {
             font-size: 0.9rem;
             color: #6e7681;
+        }
+
+        /* 每个仓库卡片内的版本号标签（保留原有） */
+        .release-tag {
+            font-size: 0.7rem;
+            font-weight: 500;
+            background: rgba(88, 166, 255, 0.15);
+            border: 1px solid rgba(88, 166, 255, 0.25);
+            color: #58a6ff;
+            padding: 0.1rem 0.6rem;
+            border-radius: 20px;
+            letter-spacing: 0.02em;
+            margin-left: auto;
+            flex-shrink: 0;
         }
 
         .repo-desc {
@@ -355,39 +383,13 @@
             animation: spin 1.5s linear infinite;
         }
 
-        .loading.error i {
-            color: #f85149;
-            animation: none;
-        }
-
-        .loading .retry-btn {
-            margin-top: 20px;
-            background: #21262d;
-            border: 1px solid #30363d;
-            color: #e6edf3;
-            padding: 8px 24px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: all 0.25s;
-        }
-
-        .loading .retry-btn:hover {
-            background: #30363d;
-            border-color: #58a6ff;
-        }
-
-        .loading .hint {
-            margin-top: 12px;
-            font-size: 0.9rem;
-            color: #8b949e;
-            border-top: 1px solid #2d333b;
-            padding-top: 12px;
-        }
-
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         footer {
@@ -410,37 +412,66 @@
         }
 
         @keyframes heartBeat {
-            0%, 100% { transform: scale(1); }
-            10% { transform: scale(1.2); }
-            20% { transform: scale(1); }
-            30% { transform: scale(1.1); }
-            40% { transform: scale(1); }
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            10% {
+                transform: scale(1.2);
+            }
+            20% {
+                transform: scale(1);
+            }
+            30% {
+                transform: scale(1.1);
+            }
+            40% {
+                transform: scale(1);
+            }
         }
 
         @media (max-width: 600px) {
-            .container { padding: 24px 16px 40px; }
-            h1 { font-size: 2.2rem; }
-            .repo-grid { grid-template-columns: 1fr; }
-            .avatar { width: 100px; height: 100px; }
-            .status-dot { width: 14px; height: 14px; bottom: 4px; right: 4px; }
-            .release-tag { font-size: 0.8rem; padding: 2px 10px; }
+            .container {
+                padding: 24px 16px 40px;
+            }
+            h1 {
+                font-size: 2.2rem;
+            }
+            .repo-grid {
+                grid-template-columns: 1fr;
+            }
+            .avatar {
+                width: 100px;
+                height: 100px;
+            }
+            .status-dot {
+                width: 14px;
+                height: 14px;
+                bottom: 4px;
+                right: 4px;
+            }
+            .release-tag {
+                font-size: 0.6rem;
+                padding: 0.05rem 0.4rem;
+                margin-left: 0;
+            }
+            .global-release-tag {
+                font-size: 0.8rem;
+                padding: 2px 10px;
+            }
         }
 
         .cursor-blink {
             animation: blink 1s step-end infinite;
         }
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
-        }
-
-        kbd {
-            background: #21262d;
-            border: 1px solid #30363d;
-            border-radius: 4px;
-            padding: 1px 6px;
-            font-size: 0.8rem;
-            color: #e6edf3;
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
         }
     </style>
 </head>
@@ -459,16 +490,15 @@
                 游戏逆向 · 二进制分析 · 光遇技术研究
                 <span class="cursor-blink">|</span>
             </p>
+            <!-- 头部操作区：语言切换 + 下载按钮 + 版本号 -->
             <div class="header-actions">
                 <button class="lang-switch" id="langBtn">
                     <i class="fas fa-globe"></i> English
                 </button>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <button class="download-btn" id="downloadBtn">
-                        <i class="fas fa-file-archive"></i> <span id="downloadLabel">下载文件整合</span>
-                    </button>
-                    <span class="release-tag" id="releaseTag" title="最新 Release 版本号">—</span>
-                </div>
+                <button class="download-btn" id="downloadBtn">
+                    <i class="fas fa-file-archive"></i> <span id="downloadLabel">下载文件整合</span>
+                </button>
+                <span class="global-release-tag" id="globalReleaseTag" title="最新 Release 版本号">—</span>
             </div>
             <div class="links" id="linksContainer"></div>
         </header>
@@ -494,19 +524,7 @@
 
     <script>
         // ============================================================
-        // 0. 强制刷新：如果 URL 没有 ?_t= 参数，自动添加
-        // ============================================================
-        (function ensureNoCache() {
-            if (!window.location.search.includes('_t=')) {
-                const sep = window.location.search ? '&' : '?';
-                const newUrl = window.location.href + sep + '_t=' + Date.now();
-                window.location.replace(newUrl);
-                return;
-            }
-        })();
-
-        // ============================================================
-        // 1. 粒子背景
+        // 1. 粒子背景 (保持不变)
         // ============================================================
         (function initParticles() {
             const canvas = document.getElementById('particle-canvas');
@@ -536,8 +554,10 @@
                 update() {
                     this.x += this.vx;
                     this.y += this.vy;
-                    if (this.x < 0 || this.x > width) { this.vx *= -1; this.x += this.vx; }
-                    if (this.y < 0 || this.y > height) { this.vy *= -1; this.y += this.vy; }
+                    if (this.x < 0 || this.x > width) { this.vx *= -1;
+                        this.x += this.vx; }
+                    if (this.y < 0 || this.y > height) { this.vy *= -1;
+                        this.y += this.vy; }
                 }
                 draw() {
                     ctx.beginPath();
@@ -572,7 +592,8 @@
 
             function animate() {
                 ctx.clearRect(0, 0, width, height);
-                particles.forEach(p => { p.update(); p.draw(); });
+                particles.forEach(p => { p.update();
+                    p.draw(); });
                 drawLines();
                 requestAnimationFrame(animate);
             }
@@ -599,12 +620,9 @@
                 linkSite: '个人站点',
                 linkQQ: 'QQ 联系',
                 linkMail: '邮箱',
+                release: '最新版本',
                 downloadLabel: '下载文件整合',
-                downloadError: '获取下载链接失败',
-                retry: '重试',
-                noRepo: '暂无公开项目',
-                usingProxy: '使用代理中...',
-                proxyFailed: '代理请求失败，请检查网络或稍后再试'
+                downloadError: '获取下载链接失败'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -621,12 +639,9 @@
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
                 linkMail: 'Email',
+                release: 'Latest release',
                 downloadLabel: 'Download File Consolidation',
-                downloadError: 'Failed to get download link',
-                retry: 'Retry',
-                noRepo: 'No public repos',
-                usingProxy: 'Using proxy...',
-                proxyFailed: 'Proxy request failed, check network or try later'
+                downloadError: 'Failed to get download link'
             }
         };
 
@@ -684,7 +699,7 @@
         }
 
         // ============================================================
-        // 4. 渲染函数
+        // 4. 渲染函数 (链接、文本)
         // ============================================================
         function renderLinks() {
             const t = i18n[currentLang];
@@ -712,71 +727,84 @@
         }
 
         // ============================================================
-        // 5. 带代理的 fetch 函数
+        // 5. 获取 GitHub 仓库 + 最新 Release 版本号（每个仓库卡片内）
         // ============================================================
-        const PROXY_URL = 'https://api.allorigins.win/raw?url=';
-
-        async function fetchWithProxy(url, useProxy = false) {
-            const targetUrl = useProxy ? PROXY_URL + encodeURIComponent(url) : url;
-            const response = await fetch(targetUrl, {
-                cache: 'no-store',
-                headers: {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Cache-Control': 'no-cache, no-store'
-                }
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-            return await response.json();
-        }
-
-        // ============================================================
-        // 6. 获取 GitHub 仓库（自动切换代理）
-        // ============================================================
-        async function fetchRepos(retryCount = 2) {
+        async function fetchRepos() {
             const container = document.getElementById('repoContainer');
             const t = i18n[currentLang];
             container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
 
             try {
-                let data;
-                let useProxy = false;
+                const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100');
+                if (!res.ok) throw new Error('API error');
+                const repos = await res.json();
 
-                // 先尝试直连
-                try {
-                    const url = `https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100&_=${Date.now()}`;
-                    data = await fetchWithProxy(url, false);
-                } catch (directError) {
-                    console.warn('Direct fetch failed, trying proxy...', directError);
-                    // 如果直连失败（Failed to fetch），使用代理
-                    useProxy = true;
-                    container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.usingProxy}</div>`;
-                    const proxyUrl = `https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100&_=${Date.now()}`;
-                    data = await fetchWithProxy(proxyUrl, true);
-                }
-
-                // 过滤掉 github.io 仓库
-                const filtered = data.filter(r => !r.name.toLowerCase().includes('github.io'));
+                const filtered = repos.filter(r => !r.name.includes('github.io'));
 
                 if (filtered.length === 0) {
-                    container.innerHTML = `<div class="loading">✨ ${t.noRepo}</div>`;
+                    container.innerHTML = `<div class="loading">✨ 暂无公开项目</div>`;
                     return;
                 }
 
-                // 直接使用 repo.language
-                container.innerHTML = filtered.map(repo => {
+                const reposWithData = await Promise.all(
+                    filtered.map(async (repo) => {
+                        // 获取语言
+                        try {
+                            const langRes = await fetch(repo.languages_url);
+                            const langData = await langRes.json();
+                            const langs = Object.keys(langData);
+
+                            if (langs.length > 0) {
+                                let maxLang = langs[0];
+                                let maxBytes = langData[maxLang];
+                                for (const [lang, bytes] of Object.entries(langData)) {
+                                    if (bytes > maxBytes) {
+                                        maxLang = lang;
+                                        maxBytes = bytes;
+                                    }
+                                }
+                                repo.language = maxLang;
+                                repo.allLanguages = langs;
+                            } else {
+                                repo.language = null;
+                                repo.allLanguages = [];
+                            }
+                        } catch (e) {
+                            repo.language = null;
+                            repo.allLanguages = [];
+                        }
+
+                        // 获取最新 release (只获取 tag_name)
+                        try {
+                            const releaseRes = await fetch(repo.url + '/releases/latest');
+                            if (releaseRes.ok) {
+                                const releaseData = await releaseRes.json();
+                                repo.latestReleaseTag = releaseData.tag_name || null;
+                            } else {
+                                repo.latestReleaseTag = null;
+                            }
+                        } catch (e) {
+                            repo.latestReleaseTag = null;
+                        }
+
+                        return repo;
+                    })
+                );
+
+                container.innerHTML = reposWithData.map(repo => {
                     const desc = repo.description || '-';
-                    const primaryLang = repo.language || null;
+                    const primaryLang = repo.language;
                     const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
                     const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
                     const langDisplay = primaryLang || '未检测到代码';
+                    const releaseTag = repo.latestReleaseTag || null;
 
                     return `
                                 <a href="${repo.html_url}" target="_blank" class="repo-card">
                                     <div class="repo-name">
                                         <i class="fas fa-folder-open"></i> ${repo.name}
+                                        ${releaseTag ? `<span class="release-tag">${releaseTag}</span>` : ''}
                                     </div>
                                     <div class="repo-desc">${desc}</div>
                                     <div class="repo-extra">
@@ -794,73 +822,55 @@
                 }).join('');
 
             } catch (e) {
+                container.innerHTML = `<div class="loading"><i class="fas fa-exclamation-triangle"></i> 加载失败，请刷新重试</div>`;
                 console.warn('Fetch repos error:', e);
-                let errorMsg = e.message || '未知错误';
-                if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
-                    errorMsg = i18n[currentLang].proxyFailed;
-                }
-
-                container.innerHTML = `
-                            <div class="loading error">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <div>加载失败：${errorMsg}</div>
-                                <div class="hint">💡 请检查网络连接，或尝试使用 VPN/代理</div>
-                                <button class="retry-btn" onclick="fetchRepos(2)"><i class="fas fa-redo"></i> ${i18n[currentLang].retry}</button>
-                            </div>
-                        `;
             }
         }
 
         // ============================================================
-        // 7. 下载功能 + Tag 显示（同样自动切换代理）
+        // 6. 新增：获取全局最新 Release（用于头部下载按钮和版本号）
         // ============================================================
-        let cachedReleaseInfo = null;
+        let globalReleaseInfo = { tag: null, downloadUrl: null };
 
-        async function fetchLatestReleaseInfo() {
-            const tagEl = document.getElementById('releaseTag');
+        async function fetchGlobalRelease() {
+            const tagEl = document.getElementById('globalReleaseTag');
             tagEl.textContent = '⋯';
             tagEl.classList.remove('error');
 
             try {
-                let data;
-                let useProxy = false;
-                const url = `https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest?_=${Date.now()}`;
-
-                try {
-                    data = await fetchWithProxy(url, false);
-                } catch (directError) {
-                    console.warn('Direct release fetch failed, trying proxy...', directError);
-                    useProxy = true;
-                    data = await fetchWithProxy(url, true);
+                const res = await fetch('https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest');
+                if (!res.ok) {
+                    // 如果是404表示没有release
+                    if (res.status === 404) {
+                        tagEl.textContent = '—';
+                        return;
+                    }
+                    throw new Error(`HTTP ${res.status}`);
                 }
-
-                const tag = data.tag_name || '';
+                const data = await res.json();
+                const tag = data.tag_name || null;
                 const asset = data.assets ? data.assets.find(a => a.name === 'File-Consolidation.zip') : null;
                 const downloadUrl = asset ? asset.browser_download_url : null;
 
-                cachedReleaseInfo = { tag, downloadUrl };
-                tagEl.textContent = tag || '—';
-                if (!tag) tagEl.classList.add('error');
+                globalReleaseInfo = { tag, downloadUrl };
 
-                return cachedReleaseInfo;
-            } catch (e) {
-                console.warn('获取 release 失败:', e);
-                let errMsg = e.message || '获取失败';
-                if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
-                    errMsg = '网络错误，请检查连接';
+                if (tag) {
+                    tagEl.textContent = tag;
+                } else {
+                    tagEl.textContent = '—';
                 }
-                tagEl.textContent = '⚠️ ' + errMsg;
+            } catch (e) {
+                console.warn('获取全局 release 失败:', e);
+                tagEl.textContent = '⚠️ 获取失败';
                 tagEl.classList.add('error');
-                cachedReleaseInfo = { tag: null, downloadUrl: null };
-                return cachedReleaseInfo;
+                globalReleaseInfo = { tag: null, downloadUrl: null };
             }
         }
 
-        // 页面加载时获取
-        fetchLatestReleaseInfo();
-
-        // 下载按钮点击
-        document.getElementById('downloadBtn').addEventListener('click', async function(e) {
+        // ============================================================
+        // 7. 下载按钮事件
+        // ============================================================
+        document.getElementById('downloadBtn').addEventListener('click', function() {
             const btn = this;
             const label = document.getElementById('downloadLabel');
             const t = i18n[currentLang];
@@ -870,39 +880,46 @@
             btn.style.opacity = '0.7';
             label.textContent = '⏳ 获取链接...';
 
-            try {
-                let info = cachedReleaseInfo;
-                if (!info || !info.downloadUrl) {
-                    info = await fetchLatestReleaseInfo();
-                }
-                if (info && info.downloadUrl) {
+            // 如果还没有缓存或者缓存无效，重新获取
+            if (!globalReleaseInfo.downloadUrl) {
+                fetchGlobalRelease().then(() => {
+                    if (globalReleaseInfo.downloadUrl) {
+                        triggerDownload();
+                    } else {
+                        label.textContent = '⚠️ ' + t.downloadError;
+                        setTimeout(() => {
+                            label.textContent = t.downloadLabel;
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                        }, 2500);
+                    }
+                });
+            } else {
+                triggerDownload();
+            }
+
+            function triggerDownload() {
+                if (globalReleaseInfo.downloadUrl) {
                     const a = document.createElement('a');
-                    a.href = info.downloadUrl;
+                    a.href = globalReleaseInfo.downloadUrl;
                     a.download = 'File-Consolidation.zip';
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     label.textContent = '✅ 已开始下载';
                     setTimeout(() => {
-                        label.textContent = t.downloadLabel;
+                        label.textContent = i18n[currentLang].downloadLabel;
                         btn.disabled = false;
                         btn.style.opacity = '1';
                     }, 2500);
                 } else {
-                    label.textContent = '⚠️ ' + t.downloadError;
+                    label.textContent = '⚠️ ' + i18n[currentLang].downloadError;
                     setTimeout(() => {
-                        label.textContent = t.downloadLabel;
+                        label.textContent = i18n[currentLang].downloadLabel;
                         btn.disabled = false;
                         btn.style.opacity = '1';
                     }, 2500);
                 }
-            } catch (err) {
-                label.textContent = '⚠️ ' + t.downloadError;
-                setTimeout(() => {
-                    label.textContent = t.downloadLabel;
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                }, 2500);
             }
         });
 
@@ -913,15 +930,18 @@
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             const url = new URL(window.location);
             url.searchParams.set('lang', currentLang);
-            url.searchParams.set('_t', Date.now());
-            window.location.href = url.href;
+            window.history.replaceState({}, '', url);
+            renderText();
+            fetchRepos();
+            // 全局版本号不随语言变化，保持原样
         });
 
         // ============================================================
         // 9. 初始化
         // ============================================================
         renderText();
-        fetchRepos(2);
+        fetchRepos();
+        fetchGlobalRelease(); // 获取头部版本号
     </script>
 </body>
 </html>
