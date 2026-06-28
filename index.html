@@ -377,6 +377,14 @@
             border-color: #58a6ff;
         }
 
+        .loading .hint {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #8b949e;
+            border-top: 1px solid #2d333b;
+            padding-top: 12px;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -424,6 +432,15 @@
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0; }
+        }
+
+        kbd {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.8rem;
+            color: #e6edf3;
         }
     </style>
 </head>
@@ -484,7 +501,7 @@
                 const sep = window.location.search ? '&' : '?';
                 const newUrl = window.location.href + sep + '_t=' + Date.now();
                 window.location.replace(newUrl);
-                return; // 终止执行，等待重定向
+                return;
             }
         })();
 
@@ -585,7 +602,9 @@
                 downloadLabel: '下载文件整合',
                 downloadError: '获取下载链接失败',
                 retry: '重试',
-                noRepo: '暂无公开项目'
+                noRepo: '暂无公开项目',
+                networkError: '无法连接 GitHub API，请检查网络或开启 VPN/代理',
+                hint: '💡 提示：尝试无痕模式、关闭广告拦截器，或切换网络后按 <kbd>Ctrl+Shift+R</kbd> 强制刷新'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -605,7 +624,9 @@
                 downloadLabel: 'Download File Consolidation',
                 downloadError: 'Failed to get download link',
                 retry: 'Retry',
-                noRepo: 'No public repos'
+                noRepo: 'No public repos',
+                networkError: 'Cannot reach GitHub API, please check network or enable VPN/proxy',
+                hint: '💡 Try incognito mode, disable ad-blockers, or switch network and press <kbd>Ctrl+Shift+R</kbd> to hard refresh'
             }
         };
 
@@ -691,9 +712,9 @@
         }
 
         // ============================================================
-        // 5. 获取 GitHub 仓库（直接使用 repo.language，避免额外请求）
+        // 5. 获取 GitHub 仓库（带自动重试）
         // ============================================================
-        async function fetchRepos() {
+        async function fetchRepos(retryCount = 3) {
             const container = document.getElementById('repoContainer');
             const t = i18n[currentLang];
             container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
@@ -768,20 +789,26 @@
                 if (e.name === 'AbortError') {
                     errorMsg = '请求超时，请检查网络连接。';
                 }
+                // 判断是否为网络错误（Failed to fetch）
+                if (e.message === 'Failed to fetch' || e.type === 'system' || e.message.includes('NetworkError')) {
+                    errorMsg = i18n[currentLang].networkError;
+                }
+
+                // 如果还有重试次数，自动重试
+                if (retryCount > 0 && (e.message === 'Failed to fetch' || e.name === 'AbortError')) {
+                    container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> 网络不稳定，正在重试 (${retryCount})...</div>`;
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    return fetchRepos(retryCount - 1);
+                }
+
                 container.innerHTML = `
                             <div class="loading error">
                                 <i class="fas fa-exclamation-triangle"></i>
                                 <div>加载失败：${errorMsg}</div>
-                                <div style="font-size:0.85rem; margin-top:8px; color:#8b949e;">
-                                    💡 提示：请按 <kbd>Ctrl+Shift+R</kbd>（或 <kbd>Ctrl+F5</kbd>）强制刷新页面
-                                </div>
-                                <button class="retry-btn" onclick="fetchRepos()"><i class="fas fa-redo"></i> ${i18n[currentLang].retry}</button>
+                                <div class="hint">${i18n[currentLang].hint}</div>
+                                <button class="retry-btn" onclick="fetchRepos(3)"><i class="fas fa-redo"></i> ${i18n[currentLang].retry}</button>
                             </div>
                         `;
-                // 如果是 403 错误，5秒后自动重试一次
-                if (e.message && e.message.includes('速率限制')) {
-                    setTimeout(() => fetchRepos(), 5000);
-                }
             }
         }
 
@@ -825,8 +852,6 @@
                 const downloadUrl = asset ? asset.browser_download_url : null;
 
                 cachedReleaseInfo = { tag, downloadUrl };
-
-                // 直接显示纯数字 tag（用户自定义）
                 tagEl.textContent = tag || '—';
                 if (!tag) tagEl.classList.add('error');
 
@@ -835,6 +860,7 @@
                 console.warn('获取 release 失败:', e);
                 let errMsg = e.message || '获取失败';
                 if (e.name === 'AbortError') errMsg = '请求超时';
+                else if (e.message === 'Failed to fetch') errMsg = '网络错误，请检查连接';
                 tagEl.textContent = '⚠️ ' + errMsg;
                 tagEl.classList.add('error');
                 cachedReleaseInfo = { tag: null, downloadUrl: null };
@@ -899,7 +925,6 @@
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             const url = new URL(window.location);
             url.searchParams.set('lang', currentLang);
-            // 保留 _t 参数避免缓存
             url.searchParams.set('_t', Date.now());
             window.location.href = url.href;
         });
@@ -908,7 +933,7 @@
         // 8. 初始化
         // ============================================================
         renderText();
-        fetchRepos();
+        fetchRepos(3); // 最多重试3次
     </script>
 </body>
 </html>
