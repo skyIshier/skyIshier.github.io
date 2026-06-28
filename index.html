@@ -175,6 +175,12 @@
             text-align: center;
             line-height: 1.4;
             transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .release-tag.error {
+            color: #f85149;
+            border-color: #f85149;
         }
 
         .release-tag:hover {
@@ -354,6 +360,28 @@
             animation: spin 1.5s linear infinite;
         }
 
+        .loading.error i {
+            color: #f85149;
+            animation: none;
+        }
+
+        .loading .retry-btn {
+            margin-top: 20px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #e6edf3;
+            padding: 8px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.25s;
+        }
+
+        .loading .retry-btn:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
         @keyframes spin {
             0% {
                 transform: rotate(0deg);
@@ -464,7 +492,7 @@
                     <button class="download-btn" id="downloadBtn">
                         <i class="fas fa-file-archive"></i> <span id="downloadLabel">下载文件整合</span>
                     </button>
-                    <span class="release-tag" id="releaseTag">—</span>
+                    <span class="release-tag" id="releaseTag" title="最新 Release 版本号">—</span>
                 </div>
             </div>
             <div class="links" id="linksContainer"></div>
@@ -569,7 +597,7 @@
 
 
         // ============================================================
-        // 2. 国际化配置 (新增下载按钮文本)
+        // 2. 国际化配置
         // ============================================================
         const i18n = {
             zh: {
@@ -588,7 +616,8 @@
                 linkQQ: 'QQ 联系',
                 linkMail: '邮箱',
                 downloadLabel: '下载文件整合',
-                downloadError: '获取下载链接失败'
+                downloadError: '获取下载链接失败',
+                retry: '重试'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -606,7 +635,8 @@
                 linkQQ: 'QQ Contact',
                 linkMail: 'Email',
                 downloadLabel: 'Download File Consolidation',
-                downloadError: 'Failed to get download link'
+                downloadError: 'Failed to get download link',
+                retry: 'Retry'
             }
         };
 
@@ -692,7 +722,7 @@
         }
 
         // ============================================================
-        // 5. 获取 GitHub 仓库 (完全参考您的 useGitHubRepos)
+        // 5. 获取 GitHub 仓库 (增强错误处理 + 重试)
         // ============================================================
         async function fetchRepos() {
             const container = document.getElementById('repoContainer');
@@ -700,10 +730,28 @@
             container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
 
             try {
-                const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100');
-                if (!res.ok) throw new Error('API error');
-                const repos = await res.json();
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 15000); // 15s 超时
 
+                const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100', {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                clearTimeout(timeout);
+
+                if (!res.ok) {
+                    let errMsg = `GitHub API 错误 (${res.status})`;
+                    if (res.status === 403) {
+                        errMsg = 'API 速率限制已用尽，请稍后再试或配置访问令牌。';
+                    } else if (res.status === 404) {
+                        errMsg = '用户不存在或仓库不可访问。';
+                    }
+                    throw new Error(errMsg);
+                }
+
+                const repos = await res.json();
                 const filtered = repos.filter(r => !r.name.includes('github.io'));
 
                 if (filtered.length === 0) {
@@ -711,13 +759,16 @@
                     return;
                 }
 
+                // 获取每个仓库的语言信息（并行）
                 const reposWithLang = await Promise.all(
                     filtered.map(async (repo) => {
                         try {
-                            const langRes = await fetch(repo.languages_url);
+                            const langRes = await fetch(repo.languages_url, {
+                                headers: { 'Accept': 'application/vnd.github.v3+json' }
+                            });
+                            if (!langRes.ok) throw new Error('Lang API error');
                             const langData = await langRes.json();
                             const langs = Object.keys(langData);
-
                             if (langs.length > 0) {
                                 let maxLang = langs[0];
                                 let maxBytes = langData[maxLang];
@@ -770,33 +821,66 @@
                 }).join('');
 
             } catch (e) {
-                container.innerHTML = `<div class="loading"><i class="fas fa-exclamation-triangle"></i> 加载失败，请刷新重试</div>`;
                 console.warn('Fetch repos error:', e);
+                let errorMsg = e.message || '未知错误';
+                if (e.name === 'AbortError') {
+                    errorMsg = '请求超时，请检查网络连接。';
+                }
+                container.innerHTML = `
+                            <div class="loading error">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div>加载失败：${errorMsg}</div>
+                                <button class="retry-btn" onclick="fetchRepos()"><i class="fas fa-redo"></i> ${i18n[currentLang].retry}</button>
+                            </div>
+                        `;
             }
         }
 
         // ============================================================
-        // 6. 下载功能 + Tag 显示 (缓存)
+        // 6. 下载功能 + Tag 显示 (增强错误处理)
         // ============================================================
         let cachedReleaseInfo = null;
 
         async function fetchLatestReleaseInfo() {
+            const tagEl = document.getElementById('releaseTag');
+            tagEl.textContent = '⋯';
+            tagEl.classList.remove('error');
+
             try {
-                const res = await fetch('https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest');
-                if (!res.ok) throw new Error('Release API error');
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+
+                const res = await fetch('https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest', {
+                    signal: controller.signal,
+                    headers: { 'Accept': 'application/vnd.github.v3+json' }
+                });
+                clearTimeout(timeout);
+
+                if (!res.ok) {
+                    let errMsg = `API 错误 (${res.status})`;
+                    if (res.status === 403) errMsg = '速率限制，请稍后';
+                    else if (res.status === 404) errMsg = '暂无 Release';
+                    throw new Error(errMsg);
+                }
+
                 const release = await res.json();
                 const tag = release.tag_name || '';
-                // 查找 File-Consolidation.zip
                 const asset = release.assets.find(a => a.name === 'File-Consolidation.zip');
                 const downloadUrl = asset ? asset.browser_download_url : null;
+
                 cachedReleaseInfo = { tag, downloadUrl };
-                // 更新 Tag 显示 (纯数字, 去除前缀如 v 或 .)
-                const tagDisplay = tag.replace(/^v|\./g, ''); // 移除开头的v和所有点
-                document.getElementById('releaseTag').textContent = tagDisplay || '—';
+
+                // 直接显示 tag（用户会设置为纯数字，我们不做额外处理）
+                tagEl.textContent = tag || '—';
+                if (!tag) tagEl.classList.add('error');
+
                 return cachedReleaseInfo;
             } catch (e) {
                 console.warn('获取 release 失败:', e);
-                document.getElementById('releaseTag').textContent = '—';
+                let errMsg = e.message || '获取失败';
+                if (e.name === 'AbortError') errMsg = '请求超时';
+                tagEl.textContent = '⚠️ ' + errMsg;
+                tagEl.classList.add('error');
                 cachedReleaseInfo = { tag: null, downloadUrl: null };
                 return cachedReleaseInfo;
             }
@@ -809,7 +893,6 @@
         document.getElementById('downloadBtn').addEventListener('click', async function(e) {
             const btn = this;
             const label = document.getElementById('downloadLabel');
-            const originalText = label.textContent;
             const t = i18n[currentLang];
 
             if (btn.disabled) return;
@@ -818,9 +901,9 @@
             label.textContent = '⏳ 获取链接...';
 
             try {
-                // 如果缓存没有或下载链接为空，重新获取
                 let info = cachedReleaseInfo;
                 if (!info || !info.downloadUrl) {
+                    // 重新获取
                     info = await fetchLatestReleaseInfo();
                 }
                 if (info && info.downloadUrl) {
@@ -864,7 +947,7 @@
             window.history.replaceState({}, '', url);
             renderText();
             fetchRepos();
-            // 不重新获取 release tag，因为 tag 不随语言变化
+            // tag 显示不跟随语言，保持原样
         });
 
         // ============================================================
