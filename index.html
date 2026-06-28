@@ -6,6 +6,7 @@
     <title>skyIshier · 十二 | 动态主页</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* 样式与之前保持一致，新增版本号标签样式 */
         * {
             margin: 0;
             padding: 0;
@@ -119,7 +120,6 @@
             transition: all 0.3s ease;
             font-weight: 500;
             font-size: 0.9rem;
-            margin: 0 6px;
         }
 
         .lang-switch:hover {
@@ -127,71 +127,6 @@
             border-color: #58a6ff;
             box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
             transform: translateY(-2px);
-        }
-
-        .download-btn {
-            background: #1f6feb;
-            border: none;
-            color: #fff;
-            padding: 8px 24px;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            font-size: 0.95rem;
-            margin: 0 6px;
-            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
-        }
-
-        .download-btn:hover {
-            background: #388bfd;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(31, 111, 235, 0.4);
-        }
-
-        .download-btn i {
-            margin-right: 6px;
-        }
-
-        .download-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .global-release-tag {
-            font-size: 0.9rem;
-            color: #58a6ff;
-            font-weight: 500;
-            background: #21262d;
-            padding: 4px 14px;
-            border-radius: 20px;
-            border: 1px solid #30363d;
-            min-width: 30px;
-            text-align: center;
-            line-height: 1.4;
-            transition: all 0.2s;
-            white-space: nowrap;
-            margin-left: 4px;
-        }
-
-        .global-release-tag.error {
-            color: #f85149;
-            border-color: #f85149;
-        }
-
-        .global-release-tag:hover {
-            border-color: #58a6ff;
-            background: #2d333b;
-        }
-
-        .header-actions {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
         }
 
         .links {
@@ -294,6 +229,7 @@
             color: #6e7681;
         }
 
+        /* 版本号标签 */
         .release-tag {
             font-size: 0.7rem;
             font-weight: 500;
@@ -451,10 +387,6 @@
                 padding: 0.05rem 0.4rem;
                 margin-left: 0;
             }
-            .global-release-tag {
-                font-size: 0.8rem;
-                padding: 2px 10px;
-            }
         }
 
         .cursor-blink {
@@ -486,15 +418,9 @@
                 游戏逆向 · 二进制分析 · 光遇技术研究
                 <span class="cursor-blink">|</span>
             </p>
-            <div class="header-actions">
-                <button class="lang-switch" id="langBtn">
-                    <i class="fas fa-globe"></i> English
-                </button>
-                <button class="download-btn" id="downloadBtn">
-                    <i class="fas fa-file-archive"></i> <span id="downloadLabel">下载文件整合</span>
-                </button>
-                <span class="global-release-tag" id="globalReleaseTag" title="最新 Release 版本号">—</span>
-            </div>
+            <button class="lang-switch" id="langBtn">
+                <i class="fas fa-globe"></i> English
+            </button>
             <div class="links" id="linksContainer"></div>
         </header>
 
@@ -519,7 +445,7 @@
 
     <script>
         // ============================================================
-        // 1. 粒子背景
+        // 1. 粒子背景 (保持不变)
         // ============================================================
         (function initParticles() {
             const canvas = document.getElementById('particle-canvas');
@@ -615,9 +541,7 @@
                 linkSite: '个人站点',
                 linkQQ: 'QQ 联系',
                 linkMail: '邮箱',
-                release: '最新版本',
-                downloadLabel: '下载文件整合',
-                downloadError: '获取下载链接失败'
+                release: '最新版本'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -634,9 +558,7 @@
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
                 linkMail: 'Email',
-                release: 'Latest release',
-                downloadLabel: 'Download File Consolidation',
-                downloadError: 'Failed to get download link'
+                release: 'Latest release'
             }
         };
 
@@ -694,7 +616,7 @@
         }
 
         // ============================================================
-        // 4. 渲染函数
+        // 4. 渲染函数 (链接、文本)
         // ============================================================
         function renderLinks() {
             const t = i18n[currentLang];
@@ -716,18 +638,12 @@
             document.getElementById('projectsTitle').innerHTML = `<i class="fas fa-code-branch"></i> ${t.projectsTitle}`;
             document.getElementById('footer').innerHTML =
                 `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> ${t.footer.split('·')[1]?.trim() || t.footer}</span>`;
-            document.getElementById('downloadLabel').textContent = t.downloadLabel;
             document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
             renderLinks();
         }
 
         // ============================================================
-        // 5. 全局缓存：用于头部版本号和下载
-        // ============================================================
-        let globalReleaseInfo = { tag: null, downloadUrl: null };
-
-        // ============================================================
-        // 6. 获取 GitHub 仓库（旧代码逻辑，增加缓存全局版本号）
+        // 5. 获取 GitHub 仓库 + 最新 Release 版本号
         // ============================================================
         async function fetchRepos() {
             const container = document.getElementById('repoContainer');
@@ -735,10 +651,12 @@
             container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
 
             try {
+                // 第一步：获取仓库列表
                 const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100');
                 if (!res.ok) throw new Error('API error');
                 const repos = await res.json();
 
+                // 过滤掉个人主页仓库
                 const filtered = repos.filter(r => !r.name.includes('github.io'));
 
                 if (filtered.length === 0) {
@@ -746,6 +664,7 @@
                     return;
                 }
 
+                // 第二步：为每个项目获取详细语言信息 + 最新 release
                 const reposWithData = await Promise.all(
                     filtered.map(async (repo) => {
                         // 获取语言
@@ -774,29 +693,12 @@
                             repo.allLanguages = [];
                         }
 
-                        // 获取最新 release
+                        // 获取最新 release (只获取 tag_name)
                         try {
                             const releaseRes = await fetch(repo.url + '/releases/latest');
                             if (releaseRes.ok) {
                                 const releaseData = await releaseRes.json();
                                 repo.latestReleaseTag = releaseData.tag_name || null;
-
-                                // ★ 关键：如果是 skyIshier.github.io 仓库，缓存到全局
-                                if (repo.name === 'skyIshier.github.io') {
-                                    const asset = releaseData.assets ? releaseData.assets.find(a => a.name === 'File-Consolidation.zip') : null;
-                                    globalReleaseInfo = {
-                                        tag: releaseData.tag_name || null,
-                                        downloadUrl: asset ? asset.browser_download_url : null
-                                    };
-                                    // 更新头部版本号
-                                    const tagEl = document.getElementById('globalReleaseTag');
-                                    if (globalReleaseInfo.tag) {
-                                        tagEl.textContent = globalReleaseInfo.tag;
-                                        tagEl.classList.remove('error');
-                                    } else {
-                                        tagEl.textContent = '—';
-                                    }
-                                }
                             } else {
                                 repo.latestReleaseTag = null;
                             }
@@ -808,6 +710,7 @@
                     })
                 );
 
+                // 第三步：渲染
                 container.innerHTML = reposWithData.map(repo => {
                     const desc = repo.description || '-';
                     const primaryLang = repo.language;
@@ -845,43 +748,7 @@
         }
 
         // ============================================================
-        // 7. 下载按钮事件
-        // ============================================================
-        document.getElementById('downloadBtn').addEventListener('click', function() {
-            const btn = this;
-            const label = document.getElementById('downloadLabel');
-            const t = i18n[currentLang];
-
-            if (btn.disabled) return;
-
-            if (globalReleaseInfo.downloadUrl) {
-                btn.disabled = true;
-                btn.style.opacity = '0.7';
-                label.textContent = '⏳ 准备下载...';
-
-                const a = document.createElement('a');
-                a.href = globalReleaseInfo.downloadUrl;
-                a.download = 'File-Consolidation.zip';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-
-                label.textContent = '✅ 已开始下载';
-                setTimeout(() => {
-                    label.textContent = t.downloadLabel;
-                    btn.disabled = false;
-                    btn.style.opacity = '1';
-                }, 2500);
-            } else {
-                label.textContent = '⚠️ ' + t.downloadError;
-                setTimeout(() => {
-                    label.textContent = t.downloadLabel;
-                }, 2500);
-            }
-        });
-
-        // ============================================================
-        // 8. 切换语言
+        // 6. 切换语言
         // ============================================================
         document.getElementById('langBtn').addEventListener('click', () => {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
@@ -893,7 +760,7 @@
         });
 
         // ============================================================
-        // 9. 初始化
+        // 7. 初始化
         // ============================================================
         renderText();
         fetchRepos();
