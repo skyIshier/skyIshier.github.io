@@ -120,6 +120,7 @@
             transition: all 0.3s ease;
             font-weight: 500;
             font-size: 0.9rem;
+            margin: 0 6px;
         }
 
         .lang-switch:hover {
@@ -127,6 +128,58 @@
             border-color: #58a6ff;
             box-shadow: 0 0 12px rgba(88, 166, 255, 0.2);
             transform: translateY(-2px);
+        }
+
+        .download-btn {
+            background: #1f6feb;
+            border: none;
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin: 0 6px;
+            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+        }
+
+        .download-btn:hover {
+            background: #388bfd;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(31, 111, 235, 0.4);
+        }
+
+        .download-btn i {
+            margin-right: 6px;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .release-tag {
+            font-size: 0.9rem;
+            color: #58a6ff;
+            font-weight: 500;
+            background: #21262d;
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            min-width: 30px;
+            text-align: center;
+            line-height: 1.4;
+            transition: all 0.2s;
+        }
+
+        .release-tag:hover {
+            border-color: #58a6ff;
+            background: #2d333b;
         }
 
         .links {
@@ -368,6 +421,10 @@
                 bottom: 4px;
                 right: 4px;
             }
+            .release-tag {
+                font-size: 0.8rem;
+                padding: 2px 10px;
+            }
         }
 
         .cursor-blink {
@@ -399,9 +456,17 @@
                 游戏逆向 · 二进制分析 · 光遇技术研究
                 <span class="cursor-blink">|</span>
             </p>
-            <button class="lang-switch" id="langBtn">
-                <i class="fas fa-globe"></i> English
-            </button>
+            <div class="header-actions">
+                <button class="lang-switch" id="langBtn">
+                    <i class="fas fa-globe"></i> English
+                </button>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <button class="download-btn" id="downloadBtn">
+                        <i class="fas fa-file-archive"></i> <span id="downloadLabel">下载文件整合</span>
+                    </button>
+                    <span class="release-tag" id="releaseTag">—</span>
+                </div>
+            </div>
             <div class="links" id="linksContainer"></div>
         </header>
 
@@ -504,7 +569,7 @@
 
 
         // ============================================================
-        // 2. 国际化配置
+        // 2. 国际化配置 (新增下载按钮文本)
         // ============================================================
         const i18n = {
             zh: {
@@ -521,7 +586,9 @@
                 linkGithub: 'GitHub',
                 linkSite: '个人站点',
                 linkQQ: 'QQ 联系',
-                linkMail: '邮箱'
+                linkMail: '邮箱',
+                downloadLabel: '下载文件整合',
+                downloadError: '获取下载链接失败'
             },
             en: {
                 username: 'skyIshier · 十二',
@@ -537,7 +604,9 @@
                 linkGithub: 'GitHub',
                 linkSite: 'Personal Site',
                 linkQQ: 'QQ Contact',
-                linkMail: 'Email'
+                linkMail: 'Email',
+                downloadLabel: 'Download File Consolidation',
+                downloadError: 'Failed to get download link'
             }
         };
 
@@ -617,6 +686,7 @@
             document.getElementById('projectsTitle').innerHTML = `<i class="fas fa-code-branch"></i> ${t.projectsTitle}`;
             document.getElementById('footer').innerHTML =
                 `<span>© 2026 skyIshier</span><span>·</span><span><i class="fas fa-heart"></i> ${t.footer.split('·')[1]?.trim() || t.footer}</span>`;
+            document.getElementById('downloadLabel').textContent = t.downloadLabel;
             document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
             renderLinks();
         }
@@ -630,12 +700,10 @@
             container.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> ${t.loading}</div>`;
 
             try {
-                // 第一步：获取仓库列表
                 const res = await fetch('https://api.github.com/users/skyIshier/repos?sort=updated&per_page=100');
                 if (!res.ok) throw new Error('API error');
                 const repos = await res.json();
 
-                // 过滤掉个人主页仓库
                 const filtered = repos.filter(r => !r.name.includes('github.io'));
 
                 if (filtered.length === 0) {
@@ -643,7 +711,6 @@
                     return;
                 }
 
-                // 第二步：为每个项目获取详细语言信息 (参考您的 useGitHubRepos)
                 const reposWithLang = await Promise.all(
                     filtered.map(async (repo) => {
                         try {
@@ -652,7 +719,6 @@
                             const langs = Object.keys(langData);
 
                             if (langs.length > 0) {
-                                // 找出字节数最多的语言作为主要语言
                                 let maxLang = langs[0];
                                 let maxBytes = langData[maxLang];
                                 for (const [lang, bytes] of Object.entries(langData)) {
@@ -675,15 +741,12 @@
                     })
                 );
 
-                // 第三步：渲染
                 container.innerHTML = reposWithLang.map(repo => {
                     const desc = repo.description || '-';
                     const primaryLang = repo.language;
                     const langColor = primaryLang ? getLangColor(primaryLang) : '#6e7681';
                     const topics = repo.topics ? repo.topics.slice(0, 3) : [];
                     const updatedAt = repo.updated_at ? new Date(repo.updated_at).toLocaleDateString() : '';
-
-                    // 关键：直接显示语言名，如果没有语言才显示提示
                     const langDisplay = primaryLang || '未检测到代码';
 
                     return `
@@ -713,7 +776,86 @@
         }
 
         // ============================================================
-        // 6. 切换语言
+        // 6. 下载功能 + Tag 显示 (缓存)
+        // ============================================================
+        let cachedReleaseInfo = null;
+
+        async function fetchLatestReleaseInfo() {
+            try {
+                const res = await fetch('https://api.github.com/repos/skyIshier/skyIshier.github.io/releases/latest');
+                if (!res.ok) throw new Error('Release API error');
+                const release = await res.json();
+                const tag = release.tag_name || '';
+                // 查找 File-Consolidation.zip
+                const asset = release.assets.find(a => a.name === 'File-Consolidation.zip');
+                const downloadUrl = asset ? asset.browser_download_url : null;
+                cachedReleaseInfo = { tag, downloadUrl };
+                // 更新 Tag 显示 (纯数字, 去除前缀如 v 或 .)
+                const tagDisplay = tag.replace(/^v|\./g, ''); // 移除开头的v和所有点
+                document.getElementById('releaseTag').textContent = tagDisplay || '—';
+                return cachedReleaseInfo;
+            } catch (e) {
+                console.warn('获取 release 失败:', e);
+                document.getElementById('releaseTag').textContent = '—';
+                cachedReleaseInfo = { tag: null, downloadUrl: null };
+                return cachedReleaseInfo;
+            }
+        }
+
+        // 页面加载时获取
+        fetchLatestReleaseInfo();
+
+        // 下载按钮点击
+        document.getElementById('downloadBtn').addEventListener('click', async function(e) {
+            const btn = this;
+            const label = document.getElementById('downloadLabel');
+            const originalText = label.textContent;
+            const t = i18n[currentLang];
+
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            label.textContent = '⏳ 获取链接...';
+
+            try {
+                // 如果缓存没有或下载链接为空，重新获取
+                let info = cachedReleaseInfo;
+                if (!info || !info.downloadUrl) {
+                    info = await fetchLatestReleaseInfo();
+                }
+                if (info && info.downloadUrl) {
+                    const a = document.createElement('a');
+                    a.href = info.downloadUrl;
+                    a.download = 'File-Consolidation.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    label.textContent = '✅ 已开始下载';
+                    setTimeout(() => {
+                        label.textContent = t.downloadLabel;
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }, 2500);
+                } else {
+                    label.textContent = '⚠️ ' + t.downloadError;
+                    setTimeout(() => {
+                        label.textContent = t.downloadLabel;
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }, 2500);
+                }
+            } catch (err) {
+                label.textContent = '⚠️ ' + t.downloadError;
+                setTimeout(() => {
+                    label.textContent = t.downloadLabel;
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                }, 2500);
+            }
+        });
+
+        // ============================================================
+        // 7. 切换语言
         // ============================================================
         document.getElementById('langBtn').addEventListener('click', () => {
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
@@ -722,13 +864,14 @@
             window.history.replaceState({}, '', url);
             renderText();
             fetchRepos();
+            // 不重新获取 release tag，因为 tag 不随语言变化
         });
 
         // ============================================================
-        // 7. 初始化
+        // 8. 初始化
         // ============================================================
         renderText();
         fetchRepos();
     </script>
 </body>
-</html>
+    </html>
